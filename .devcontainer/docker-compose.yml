@@ -1,0 +1,27 @@
+services:
+  nextjs:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+
+    container_name: medication-db-nextjs
+
+    working_dir: /workspace
+
+    volumes:
+      - ..:/workspace:cached
+      - node_modules:/workspace/node_modules
+
+    ports:
+      - "3000:3000"
+
+    environment:
+      NODE_ENV: development
+
+    command: sleep infinity
+
+    stdin_open: true
+    tty: true
+
+volumes:
+  node_modules:
