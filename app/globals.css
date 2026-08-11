@@ -1,26 +1,249 @@
-@import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+body {
+  font-family: Arial, "Helvetica Neue", sans-serif;
+  background: #f4f6f8;
+  padding: 20px;
+  margin: 0;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.container {
+  max-width: 900px;
+  margin: auto;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* =========================
+   カード
+========================= */
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* =========================
+   見出し
+========================= */
+
+h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+h3 {
+  border-left: 5px solid #4285f4;
+  padding-left: 10px;
+  margin-top: 0;
+}
+
+/* =========================
+   入力欄
+========================= */
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+  font-size: 14px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #4285f4;
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15);
+}
+
+/* =========================
+   ボタン
+========================= */
+
+button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 10px;
+  font-size: 14px;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.searchButton {
+  background: #4285f4;
+  color: white;
+}
+
+/* =========================
+   カテゴリチェック
+========================= */
+
+.categoryChecks {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.categoryChecks label {
+  font-weight: normal;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.categoryChecks input {
+  width: auto;
+  margin: 0;
+}
+
+/* =========================
+   検索結果
+========================= */
+
+.result {
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-top: 8px;
+  cursor: pointer;
+  background: white;
+}
+
+.result:hover {
+  background: #eef5ff;
+  border-color: #4285f4;
+}
+
+/* =========================
+   検索結果タイトル
+========================= */
+
+.resultTitle {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+/* =========================
+   日本語・英語
+========================= */
+
+.resultSub {
+  color: #555;
+  margin-bottom: 8px;
+}
+
+/* =========================
+   カテゴリ
+========================= */
+
+.resultCategory {
+  display: inline-block;
+  padding: 4px 8px;
+  background: #eef5ff;
+  color: #4285f4;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+/* =========================
+   詳細
+========================= */
+
+.resultDetail {
+  color: #444;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* =========================
+   基準値
+========================= */
+
+.range {
+  font-weight: bold;
+  color: #2c7be5;
+}
+
+/* =========================
+   スマートフォン対応
+========================= */
+
+@media (max-width: 600px) {
+  body {
+    padding: 10px;
+  }
+
+  .card {
+    padding: 15px;
+  }
+
+  .categoryChecks {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  button {
+    width: 100%;
+    margin-bottom: 8px;
+    margin-right: 0;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* =========================
+   病態領域候補
+========================= */
+
+.domainSuggestions {
+  margin-top: -5px;
+  margin-bottom: 12px;
 }
+
+.domainSuggestionTitle {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.domainSuggestion {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  margin-bottom: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.domainSuggestion:hover {
+  background: #eef5ff;
+  border-color: #4285f4;
+  box-shadow: 0 2px 5px rgba(66, 133, 244, 0.15);
+}
+
+.domainSuggestion:active {
+  background: #e3efff;
+}
+
