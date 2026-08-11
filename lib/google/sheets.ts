@@ -1,5 +1,6 @@
 import { google } from "googleapis";
-import type { Drug } from "@/lib/types/drug";
+import { rowsToObjects } from "@/lib/utils/sheet";
+
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"];
 
 function getGoogleAuth() {
@@ -29,7 +30,7 @@ function getGoogleAuth() {
   });
 }
 
-export async function getSheetValues(spreadsheetId: string, shetName: string) {
+export async function getSheetValues(spreadsheetId: string, sheetName: string) {
   const auth = getGoogleAuth();
 
   const sheets = google.sheets({
@@ -39,36 +40,17 @@ export async function getSheetValues(spreadsheetId: string, shetName: string) {
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: shetName,
+    range: sheetName,
   });
 
   return response.data.values ?? [];
 }
 
-export async function getAllDrugs(): Promise<Drug[]> {
-  const spreadsheetId = process.env.GOOGLE_SPREADSHEET_MEDICATION_ID;
+export async function getSheetObjects(
+  spreadsheetId: string,
+  sheetName: string,
+) {
+  const rows = await getSheetValues(spreadsheetId, sheetName);
 
-  if (!spreadsheetId) {
-    throw new Error("GOOGLE_SPREADSHEET_MEDICATION_ID is not set");
-  }
-
-  const values = await getSheetValues(spreadsheetId, "薬品マスタ");
-
-  return values.slice(1).map((row, index) => ({
-    rowIndex: index + 2,
-    name: row[0] ?? "",
-    ingredient: row[1] ?? "",
-    category: row[2] ?? "",
-    subcategory: row[3] ?? "",
-    form: row[4] ?? "",
-    dose: row[5] ?? "",
-    position: row[6] ?? "",
-    sameDrug: row[7] ?? "",
-    crush: row[8] ?? "",
-    suspension: row[9] ?? "",
-    saline: row[10] ?? "",
-    glucose: row[11] ?? "",
-    caution: row[12] ?? "",
-    note: row[13] ?? "",
-  }));
+  return rowsToObjects(rows);
 }

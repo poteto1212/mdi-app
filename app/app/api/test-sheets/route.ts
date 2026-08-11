@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
-import { getAllDrugs } from "@/lib/google/sheets";
+import { getSheetObjects } from "@/lib/google/sheets";
 
 export async function GET() {
   try {
-    const drugs = await getAllDrugs();
+    const spreadsheetId = process.env.GOOGLE_SPREADSHEET_MEDICATION_ID;
+
+    if (!spreadsheetId) {
+      throw new Error("GOOGLE_SPREADSHEET_MEDICATION_ID is not set");
+    }
+
+    const drugs = await getSheetObjects(spreadsheetId, "薬品マスタ");
 
     return NextResponse.json({
       success: true,
