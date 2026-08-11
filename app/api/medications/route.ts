@@ -1,21 +1,21 @@
 import { NextResponse } from "next/server";
-import { getAbbreviations } from "@/lib/repositories/abbreviationRepository";
+import { getMedications } from "@/lib/repositories/medicationRepository";
 
 export async function GET() {
   try {
-    const abbreviations = await getAbbreviations();
+    const medications = await getMedications();
 
     return NextResponse.json({
       success: true,
-      abbreviations,
+      medications,
     });
   } catch (error) {
-    console.error("Abbreviation API error:", error);
+    console.error("Medication API error:", error);
 
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to fetch abbreviation data",
+        error: "Failed to fetch medication data",
       },
       { status: 500 },
     );
