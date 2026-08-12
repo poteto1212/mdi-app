@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import styles from "./abbreviations.module.css";
 
 type Abbreviation = {
   [key: string]: string | number | null | undefined;
@@ -71,19 +72,19 @@ export default function AbbreviationResults({
     searchText.trim() !== "" || searchDomain.trim() !== "";
 
   return (
-    <div className="card">
-      <h3>📋 検索結果</h3>
+    <div className={styles.card}>
+      <h3 className={styles.sectionHeading}>📋 検索結果</h3>
 
       {/*
        * 初期状態
        */}
       {!hasSearchCondition ? (
-        <div className="noResult">キーワードを入力してください</div>
+        <div className={styles.noResult}>キーワードを入力してください</div>
       ) : filteredData.length === 0 ? (
         /*
          * 検索結果なし
          */
-        <div className="noResult">該当するデータがありません</div>
+        <div className={styles.noResult}>該当するデータがありません</div>
       ) : (
         /*
          * 検索結果
@@ -136,7 +137,7 @@ export default function AbbreviationResults({
            */
           return (
             <div
-              className="result"
+              className={styles.result}
               key={
                 rowNumber !== null && rowNumber !== undefined
                   ? String(rowNumber)
@@ -144,10 +145,10 @@ export default function AbbreviationResults({
               }
             >
               {/* 略語 */}
-              <div className="resultTitle">{abbreviation}</div>
+              <div className={styles.resultTitle}>{abbreviation}</div>
 
               {/* 日本語名・英語名 */}
-              <div className="resultSub">
+              <div className={styles.resultSub}>
                 {japaneseName}
 
                 {englishName && (
@@ -159,13 +160,15 @@ export default function AbbreviationResults({
               </div>
 
               {/* カテゴリ */}
-              {category && <div className="resultCategory">{category}</div>}
+              {category && (
+                <div className={styles.resultCategory}>{category}</div>
+              )}
 
               {/* 基準値：下限＋上限 */}
               {hasMin && hasMax && (
-                <div className="resultDetail">
+                <div className={styles.resultDetail}>
                   基準値：
-                  <span className="range">
+                  <span className={styles.range}>
                     {Number(min).toFixed(2)}
                     {" ～ "}
                     {Number(max).toFixed(2)}
@@ -176,9 +179,9 @@ export default function AbbreviationResults({
 
               {/* 基準値：下限のみ */}
               {hasMin && !hasMax && (
-                <div className="resultDetail">
+                <div className={styles.resultDetail}>
                   基準値：
-                  <span className="range">
+                  <span className={styles.range}>
                     ≧ {Number(min).toFixed(2)}
                     {unit && ` ${unit}`}
                   </span>
@@ -187,9 +190,9 @@ export default function AbbreviationResults({
 
               {/* 基準値：上限のみ */}
               {!hasMin && hasMax && (
-                <div className="resultDetail">
+                <div className={styles.resultDetail}>
                   基準値：
-                  <span className="range">
+                  <span className={styles.range}>
                     ≦ {Number(max).toFixed(2)}
                     {unit && ` ${unit}`}
                   </span>
@@ -198,14 +201,16 @@ export default function AbbreviationResults({
 
               {/* 病態領域 */}
               {domain && (
-                <div className="resultDetail">
+                <div className={styles.resultDetail}>
                   病態領域：
                   {domain}
                 </div>
               )}
 
               {/* 解説 */}
-              {description && <div className="resultDetail">{description}</div>}
+              {description && (
+                <div className={styles.resultDetail}>{description}</div>
+              )}
             </div>
           );
         })
