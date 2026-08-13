@@ -2,6 +2,9 @@ import { getAbbreviations } from "@/lib/repositories/abbreviationRepository";
 import AbbreviationSearch from "./AbbreviationSearch";
 import styles from "./abbreviations.module.css";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function AbbreviationsPage() {
   const data = await getAbbreviations();
 
