@@ -7,6 +7,7 @@ export const revalidate = 0;
 
 export default async function AbbreviationsPage() {
   const data = await getAbbreviations();
+  console.log(data);
 
   return (
     <main className={styles.container}>
