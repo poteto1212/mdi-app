@@ -1,69 +1,167 @@
-import Image from "next/image";
+import Link from "next/link";
+import { getSession } from "@/lib/auth/session";
+import styles from "./page.module.css";
 
-export default function Home() {
+export default async function Home() {
+  const session = await getSession();
+
+  const isLoggedIn = session !== null;
+  const isAdmin = session?.userType === "管理";
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className={styles.container}>
+      {/* =========================
+          ヘッダー
+      ========================== */}
+      <header className={styles.header}>
+        <div>
+          <h1 className={styles.title}>💊 医療データベース</h1>
+          <p className={styles.subtitle}>医療用語・採用薬データベース</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* ログインユーザー */}
+        {isLoggedIn && (
+          <div className={styles.userArea}>
+            <span className={styles.userNickname}>{session.nickname}</span>
+
+            <span className={styles.userType}>{session.userType}</span>
+
+            <Link href="/api/auth/logout" className={styles.logoutButton}>
+              ログアウト
+            </Link>
+          </div>
+        )}
+      </header>
+
+      {/* =========================
+          データベース
+      ========================== */}
+      <section className={styles.card}>
+        <h2 className={styles.sectionHeading}>📚 データベース</h2>
+
+        <div className={styles.menuGrid}>
+          {/* 略語検索 */}
+          <Link href="/abbreviations" className={styles.menuItem}>
+            <div className={styles.menuIcon}>📋</div>
+
+            <div>
+              <div className={styles.menuTitle}>略語検索</div>
+
+              <div className={styles.menuDescription}>
+                医療略語・日本語名・英語名を検索
+              </div>
+            </div>
+          </Link>
+
+          {/* 採用薬検索 */}
+          {isLoggedIn && (
+            <Link href="/medications" className={styles.menuItem}>
+              <div className={styles.menuIcon}>💊</div>
+
+              <div>
+                <div className={styles.menuTitle}>採用薬検索</div>
+
+                <div className={styles.menuDescription}>
+                  採用薬の薬品情報を検索
+                </div>
+              </div>
+            </Link>
+          )}
         </div>
-      </main>
-    </div>
+      </section>
+
+      {/* =========================
+          クイズ
+      ========================== */}
+      <section className={styles.card}>
+        <h2 className={styles.sectionHeading}>🧠 クイズ</h2>
+
+        <div className={styles.menuGrid}>
+          {/* 略語クイズ */}
+          <Link href="/quiz/abbreviations" className={styles.menuItem}>
+            <div className={styles.menuIcon}>📋</div>
+
+            <div>
+              <div className={styles.menuTitle}>略語クイズ</div>
+
+              <div className={styles.menuDescription}>
+                医療略語に関するクイズ
+              </div>
+            </div>
+          </Link>
+
+          {/* 検査クイズ */}
+          <Link href="/quiz/laboratory" className={styles.menuItem}>
+            <div className={styles.menuIcon}>🧪</div>
+
+            <div>
+              <div className={styles.menuTitle}>検査クイズ</div>
+
+              <div className={styles.menuDescription}>
+                検査値・基準値に関するクイズ
+              </div>
+            </div>
+          </Link>
+
+          {/* 薬品クイズ */}
+          {isLoggedIn && (
+            <Link href="/quiz/medications" className={styles.menuItem}>
+              <div className={styles.menuIcon}>💊</div>
+
+              <div>
+                <div className={styles.menuTitle}>薬品クイズ</div>
+
+                <div className={styles.menuDescription}>
+                  採用薬に関するクイズ
+                </div>
+              </div>
+            </Link>
+          )}
+        </div>
+      </section>
+
+      {/* =========================
+          管理画面
+      ========================== */}
+      {isAdmin && (
+        <section className={styles.card}>
+          <h2 className={styles.sectionHeading}>⚙️ 管理画面</h2>
+
+          <div className={styles.menuGrid}>
+            {/* 薬品管理 */}
+            <a
+              href={process.env.GAS_MEDICATION_ADMIN_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.menuItem}
+            >
+              <div className={styles.menuIcon}>💊</div>
+
+              <div>
+                <div className={styles.menuTitle}>薬品管理</div>
+
+                <div className={styles.menuDescription}>薬品管理GASを開く</div>
+              </div>
+            </a>
+
+            {/* 略語管理 */}
+            <a
+              href={process.env.GAS_ABBREVIATION_ADMIN_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.menuItem}
+            >
+              <div className={styles.menuIcon}>📋</div>
+
+              <div>
+                <div className={styles.menuTitle}>略語管理</div>
+
+                <div className={styles.menuDescription}>略語管理GASを開く</div>
+              </div>
+            </a>
+          </div>
+        </section>
+      )}
+    </main>
   );
 }

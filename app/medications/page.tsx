@@ -1,3 +1,4 @@
+import { requireLogin } from "@/lib/auth/authorization";
 import { getMedications } from "@/lib/repositories/medicationRepository";
 import MedicationSearch from "./MedicationSearch";
 import styles from "./medications.module.css";
@@ -6,8 +7,8 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function MedicationsPage() {
+  await requireLogin();
   const data = await getMedications();
-
   return (
     <main className={styles.container}>
       {/* =========================

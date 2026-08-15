@@ -17,7 +17,7 @@ export function rowsToObjects(
     });
 
     // スプレッドシート上の実際の行番号
-    obj.rowNumber = index + 2;
+    obj["rowNumber"] = index + 2;
 
     return obj;
   });
