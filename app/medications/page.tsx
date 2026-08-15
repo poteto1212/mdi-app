@@ -8,12 +8,15 @@ export const revalidate = 0;
 
 export default async function MedicationsPage() {
   await requireLogin();
+
   const data = await getMedications();
+
   return (
     <main className={styles.container}>
       {/* =========================
           採用薬データベース
       ========================== */}
+
       <div className={styles.card}>
         <h2 className={styles.heading}>💊 採用薬データベース</h2>
       </div>
