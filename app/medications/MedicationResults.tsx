@@ -23,23 +23,27 @@ export default function MedicationResults({
   selectedForms,
 }: Props) {
   /*
+   * =========================
    * 選択中の薬品
+   * =========================
    */
+
   const [selectedMedication, setSelectedMedication] =
     useState<Medication | null>(null);
 
   /*
    * =========================
-   * 表記補正
+   * 表記正規化
    * =========================
    *
-   * GAS版 normalize() と同じ考え方
+   * ・英字 → 小文字
+   * ・カタカナ → ひらがな
    *
-   * カタカナ
+   * 例：
+   *
+   * ロキソプロフェン
    * ↓
-   * ひらがな
-   *
-   * 大文字小文字も無視
+   * ろきそぷろふぇん
    */
 
   function normalize(value: unknown) {
@@ -106,12 +110,17 @@ export default function MedicationResults({
        * 剤型
        * =========================
        *
-       * selectedForms が空の場合は
-       * falseになるため、
-       * 全チェック解除 → 0件
+       * ★重要
+       *
+       * スプレッドシートの列名は
+       *
+       * 「剤型」
+       *
+       * なので「剤形」ではなく
+       * 「剤型」を使用する。
        */
 
-      const form = String(item["剤形"] ?? "").trim();
+      const form = String(item["剤型"] ?? "").trim();
 
       const matchForm = selectedForms.includes(form);
 
@@ -130,7 +139,6 @@ export default function MedicationResults({
    * 検索条件があるか
    * =========================
    *
-   * 剤型はデフォルトで全選択なので、
    * 剤型だけでは検索開始しない。
    */
 
@@ -149,12 +157,6 @@ export default function MedicationResults({
     setSelectedMedication(medication);
   }
 
-  /*
-   * =========================
-   * 表示
-   * =========================
-   */
-
   return (
     <>
       {/* =========================
@@ -169,63 +171,61 @@ export default function MedicationResults({
         ) : filteredData.length === 0 ? (
           <div className={styles.noResult}>該当する薬品がありません</div>
         ) : (
-          filteredData.map((item, index) => {
-            const rowNumber = item["rowNumber"];
+          <>
+            <div className={styles.resultCount}>{filteredData.length}件</div>
 
-            const medicationName = String(item["薬品名"] ?? "");
+            {filteredData.map((item, index) => {
+              const rowNumber = item["rowNumber"];
 
-            const ingredient = String(item["成分名"] ?? "");
+              const medicationName = String(item["薬品名"] ?? "");
 
-            const category = String(item["大分類"] ?? "");
+              const ingredient = String(item["成分名"] ?? "");
 
-            const subcategory = String(item["小分類"] ?? "");
+              const category = String(item["大分類"] ?? "");
 
-            const form = String(item["剤形"] ?? "");
+              const subcategory = String(item["小分類"] ?? "");
 
-            return (
-              <div
-                className={styles.result}
-                key={
-                  rowNumber !== null && rowNumber !== undefined
-                    ? String(rowNumber)
-                    : index
-                }
-                onClick={() => selectMedication(item)}
-              >
-                {/* 薬品名 */}
+              /*
+               * ★「剤型」に統一
+               */
+              const form = String(item["剤型"] ?? "");
 
-                <div className={styles.resultTitle}>{medicationName}</div>
+              return (
+                <button
+                  type="button"
+                  className={styles.result}
+                  key={
+                    rowNumber !== null && rowNumber !== undefined
+                      ? String(rowNumber)
+                      : `${medicationName}-${index}`
+                  }
+                  onClick={() => selectMedication(item)}
+                >
+                  {/* 薬品名 */}
 
-                {/* 成分 */}
+                  <div className={styles.resultTitle}>{medicationName}</div>
 
-                <div className={styles.resultSub}>
-                  成分：
-                  {ingredient}
-                </div>
+                  {/* 成分 */}
 
-                {/* 大分類 */}
+                  <div className={styles.resultSub}>成分：{ingredient}</div>
 
-                <div className={styles.resultDetail}>
-                  大分類：
-                  {category}
-                </div>
+                  {/* 大分類 */}
 
-                {/* 小分類 */}
+                  <div className={styles.resultDetail}>大分類：{category}</div>
 
-                <div className={styles.resultDetail}>
-                  小分類：
-                  {subcategory}
-                </div>
+                  {/* 小分類 */}
 
-                {/* 剤形 */}
+                  <div className={styles.resultDetail}>
+                    小分類：{subcategory}
+                  </div>
 
-                <div className={styles.resultDetail}>
-                  剤形：
-                  {form}
-                </div>
-              </div>
-            );
-          })
+                  {/* 剤型 */}
+
+                  <div className={styles.resultDetail}>剤型：{form}</div>
+                </button>
+              );
+            })}
+          </>
         )}
       </div>
 
@@ -251,7 +251,10 @@ type MedicationDetailProps = {
 };
 
 function MedicationDetail({ medication }: MedicationDetailProps) {
-  const form = String(medication["剤形"] ?? "");
+  /*
+   * ★「剤型」に統一
+   */
+  const form = String(medication["剤型"] ?? "");
 
   return (
     <div className={styles.card}>
@@ -294,7 +297,7 @@ function MedicationDetail({ medication }: MedicationDetailProps) {
       </div>
 
       <div className={styles.detailGroup}>
-        <div className={styles.detailLabel}>剤形</div>
+        <div className={styles.detailLabel}>剤型</div>
 
         <div className={styles.detailValue}>{form}</div>
       </div>

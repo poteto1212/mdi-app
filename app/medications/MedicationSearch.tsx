@@ -20,11 +20,18 @@ export default function MedicationSearch({ data }: Props) {
   const [searchSubcategory, setSearchSubcategory] = useState("");
 
   /*
+   * =========================
    * 剤型
+   * =========================
    *
-   * デフォルトはすべてON
+   * 初期状態はすべて選択
    */
-  const [selectedForms, setSelectedForms] = useState(["内服", "外用", "注射"]);
+
+  const [selectedForms, setSelectedForms] = useState<string[]>([
+    "内服",
+    "外用",
+    "注射",
+  ]);
 
   /*
    * =========================
@@ -39,7 +46,7 @@ export default function MedicationSearch({ data }: Props) {
           .map((item) => String(item["大分類"] ?? "").trim())
           .filter((value) => value !== ""),
       ),
-    );
+    ).sort((a, b) => a.localeCompare(b, "ja"));
   }, [data]);
 
   /*
@@ -55,7 +62,7 @@ export default function MedicationSearch({ data }: Props) {
           .map((item) => String(item["小分類"] ?? "").trim())
           .filter((value) => value !== ""),
       ),
-    );
+    ).sort((a, b) => a.localeCompare(b, "ja"));
   }, [data]);
 
   /*
@@ -101,11 +108,27 @@ export default function MedicationSearch({ data }: Props) {
    */
 
   function toggleForm(form: string) {
-    setSelectedForms((current) =>
-      current.includes(form)
-        ? current.filter((item) => item !== form)
-        : [...current, form],
-    );
+    setSelectedForms((current) => {
+      if (current.includes(form)) {
+        return current.filter((item) => item !== form);
+      }
+
+      return [...current, form];
+    });
+  }
+
+  /*
+   * =========================
+   * 検索条件リセット
+   * =========================
+   */
+
+  function resetSearch() {
+    setSearchName("");
+    setSearchCategory("");
+    setSearchSubcategory("");
+
+    setSelectedForms(["内服", "外用", "注射"]);
   }
 
   /*
@@ -131,11 +154,21 @@ export default function MedicationSearch({ data }: Props) {
   return (
     <>
       {/* =========================
-          検索
+          検索条件
       ========================== */}
 
       <div className={styles.card}>
-        <h3 className={styles.sectionHeading}>🔎 薬品検索</h3>
+        <div className={styles.searchHeader}>
+          <h3 className={styles.sectionHeading}>🔎 薬品検索</h3>
+
+          <button
+            type="button"
+            className={styles.resetButton}
+            onClick={resetSearch}
+          >
+            条件をリセット
+          </button>
+        </div>
 
         {/* =========================
             薬品名・成分名
@@ -148,6 +181,7 @@ export default function MedicationSearch({ data }: Props) {
         <input
           className={styles.input}
           id="searchName"
+          type="text"
           placeholder="薬品名または成分名を検索"
           autoComplete="off"
           value={searchName}
@@ -165,26 +199,26 @@ export default function MedicationSearch({ data }: Props) {
         <input
           className={styles.input}
           id="searchCategory"
+          type="text"
           placeholder="大分類を入力"
           autoComplete="off"
           value={searchCategory}
           onChange={(e) => setSearchCategory(e.target.value)}
         />
 
-        {/* 大分類候補 */}
-
         {searchCategory.trim() !== "" && categorySuggestions.length > 0 && (
           <div className={styles.suggestions}>
             <div className={styles.suggestionTitle}>登録済みの候補</div>
 
             {categorySuggestions.map((category) => (
-              <div
+              <button
+                type="button"
                 key={category}
                 className={styles.suggestion}
                 onClick={() => selectCategory(category)}
               >
                 {category}
-              </div>
+              </button>
             ))}
           </div>
         )}
@@ -200,13 +234,12 @@ export default function MedicationSearch({ data }: Props) {
         <input
           className={styles.input}
           id="searchSubcategory"
+          type="text"
           placeholder="小分類を入力"
           autoComplete="off"
           value={searchSubcategory}
           onChange={(e) => setSearchSubcategory(e.target.value)}
         />
-
-        {/* 小分類候補 */}
 
         {searchSubcategory.trim() !== "" &&
           subcategorySuggestions.length > 0 && (
@@ -214,13 +247,14 @@ export default function MedicationSearch({ data }: Props) {
               <div className={styles.suggestionTitle}>登録済みの候補</div>
 
               {subcategorySuggestions.map((subcategory) => (
-                <div
+                <button
+                  type="button"
                   key={subcategory}
                   className={styles.suggestion}
                   onClick={() => selectSubcategory(subcategory)}
                 >
                   {subcategory}
-                </div>
+                </button>
               ))}
             </div>
           )}
