@@ -1,0 +1,113 @@
+.header {
+  width: 100%;
+  background: #ffffff;
+  border-bottom: 1px solid #ddd;
+}
+
+.inner {
+  max-width: 900px;
+  min-height: 60px;
+  margin: 0 auto;
+  padding: 0 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  box-sizing: border-box;
+}
+
+/* =========================
+   ホーム
+========================= */
+
+.homeButton {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 8px 12px;
+
+  border-radius: 6px;
+
+  color: #555;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: bold;
+
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+.homeButton:hover {
+  background: #eef5ff;
+  color: #4285f4;
+}
+
+/* =========================
+   右側
+========================= */
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* =========================
+   ニックネーム
+========================= */
+
+.nickname {
+  color: #555;
+  font-size: 14px;
+}
+
+/* =========================
+   ログイン
+========================= */
+
+.loginButton {
+  display: inline-block;
+
+  padding: 8px 14px;
+
+  border-radius: 6px;
+
+  background: #4285f4;
+  color: white;
+
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: bold;
+
+  transition: opacity 0.2s;
+}
+
+.loginButton:hover {
+  opacity: 0.9;
+}
+
+/* =========================
+   スマートフォン
+========================= */
+
+@media (max-width: 600px) {
+  .inner {
+    padding: 0 10px;
+  }
+
+  .nickname {
+    font-size: 13px;
+  }
+
+  .right {
+    gap: 10px;
+  }
+
+  .homeButton,
+  .loginButton {
+    padding: 7px 10px;
+    font-size: 13px;
+  }
+}
