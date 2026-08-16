@@ -91,7 +91,7 @@ export default async function Home() {
           </Link>
 
           {/* 検査クイズ */}
-          <Link href="/quiz/laboratory" className={styles.menuItem}>
+          <Link href="/laboratoryquiz" className={styles.menuItem}>
             <div className={styles.menuIcon}>🧪</div>
 
             <div>
