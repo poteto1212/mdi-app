@@ -78,7 +78,7 @@ export default async function Home() {
 
         <div className={styles.menuGrid}>
           {/* 略語クイズ */}
-          <Link href="/quiz/abbreviations" className={styles.menuItem}>
+          <Link href="abbreviationquiz" className={styles.menuItem}>
             <div className={styles.menuIcon}>📋</div>
 
             <div>
