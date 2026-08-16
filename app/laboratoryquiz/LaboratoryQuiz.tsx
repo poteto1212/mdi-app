@@ -1424,9 +1424,8 @@ export default function LaboratoryQuiz({ data }: Props) {
                   <label className={styles.valueLabel}>下限</label>
 
                   <input
-                    type="number"
+                    type="text"
                     inputMode="decimal"
-                    step="any"
                     className={styles.answerInput}
                     value={lowerInput}
                     onChange={(e) => setLowerInput(e.target.value)}
@@ -1444,9 +1443,8 @@ export default function LaboratoryQuiz({ data }: Props) {
                   <label className={styles.valueLabel}>上限</label>
 
                   <input
-                    type="number"
+                    type="text"
                     inputMode="decimal"
-                    step="any"
                     className={styles.answerInput}
                     value={upperInput}
                     onChange={(e) => setUpperInput(e.target.value)}
