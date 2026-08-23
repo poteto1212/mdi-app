@@ -24,13 +24,6 @@ export default async function Home() {
 
             <span className={styles.userType}>{session.userType}</span>
             <LogoutLink />
-            {/* <Link
-              // onClick={}
-              href="/api/auth/logout"
-              className={styles.logoutButton}
-            >
-              ログアウト
-            </Link> */}
           </div>
         )}
       </header>
