@@ -30,7 +30,7 @@ const ANSWER_MODES = [
 
 type AnswerMode = (typeof ANSWER_MODES)[number]["value"];
 
-type CategoryMode = "all" | "category";
+type CategoryMode = "all" | "category" | "law";
 
 /*
  * ==================================================
@@ -190,7 +190,11 @@ function isValidQuizState(value: unknown): value is QuizState {
     return false;
   }
 
-  if (state.categoryMode !== "all" && state.categoryMode !== "category") {
+  if (
+    state.categoryMode !== "all" &&
+    state.categoryMode !== "category" &&
+    state.categoryMode !== "law"
+  ) {
     return false;
   }
 
@@ -756,6 +760,11 @@ export default function AbbreviationQuiz({ data }: Props) {
       });
     }
 
+    if (categoryMode === "law") {
+      targetData = data.filter((item) => {
+        return String(item["カテゴリ"] ?? "").trim() === "法規制度";
+      });
+    }
     /*
      * =========================
      * クイズ問題へ変換
@@ -1593,7 +1602,16 @@ export default function AbbreviationQuiz({ data }: Props) {
                 checked={categoryMode === "category"}
                 onChange={() => changeCategoryMode("category")}
               />
-              領域別
+              病態領域別
+            </label>
+            <label className={styles.radioLabel}>
+              <input
+                type="radio"
+                name="categoryMode"
+                checked={categoryMode === "law"}
+                onChange={() => changeCategoryMode("law")}
+              />
+              法規制度
             </label>
           </div>
         </section>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
+import LogoutLink from "./components/LogoutLink";
 import styles from "./page.module.css";
 
 export default async function Home() {
@@ -10,13 +11,10 @@ export default async function Home() {
 
   return (
     <main className={styles.container}>
-      {/* =========================
-          ヘッダー
-      ========================== */}
       <header className={styles.header}>
         <div>
           <h1 className={styles.title}>💊 医療データベース</h1>
-          <p className={styles.subtitle}>医療用語・採用薬データベース</p>
+          <p className={styles.subtitle}>医療用語・薬品データベース</p>
         </div>
 
         {/* ログインユーザー */}
@@ -25,10 +23,7 @@ export default async function Home() {
             <span className={styles.userNickname}>{session.nickname}</span>
 
             <span className={styles.userType}>{session.userType}</span>
-
-            <Link href="/api/auth/logout" className={styles.logoutButton}>
-              ログアウト
-            </Link>
+            <LogoutLink />
           </div>
         )}
       </header>
