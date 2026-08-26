@@ -37,8 +37,22 @@ type QuizLevel = "large" | "small" | "ingredient";
 
 /*
  * ==================================================
- * 問題
+ * クイズ問題
  * ==================================================
+ *
+ * 1問分の問題情報を保持する。
+ *
+ * level
+ *   → 大分類 / 小分類 / 成分
+ *
+ * questionValue
+ *   → 実際に表示する分類名・成分名
+ *
+ * dosageForms
+ *   → この問題に含まれる薬品の剤型
+ *
+ * correctMedications
+ *   → この問題の正解となる薬品名一覧
  */
 
 type QuizQuestion = {
@@ -55,8 +69,10 @@ type QuizQuestion = {
 
 /*
  * ==================================================
- * クイズ状態
+ * 回答情報
  * ==================================================
+ *
+ * 1問に対するユーザーの回答結果を保持する。
  */
 
 type QuizAnswer = {
@@ -72,6 +88,12 @@ type QuizAnswer = {
 
   isPerfect: boolean;
 };
+
+/*
+ * ==================================================
+ * クイズ全体の状態
+ * ==================================================
+ */
 
 type QuizState = {
   questionCount: number;
@@ -93,7 +115,7 @@ const STORAGE_KEY = "medicationQuizState";
 
 /*
  * ==================================================
- * データ取得用
+ * データ取得用関数
  * ==================================================
  */
 
@@ -106,8 +128,15 @@ function getText(item: MedicationData, key: string): string {
  * 剤型判定
  * ==================================================
  *
- * 薬品マスタの「剤型」は
- * 内服 / 注射 / 外用を識別するために使用する。
+ * 薬品マスタの「剤型」列から、
+ *
+ * ・内服
+ * ・注射
+ * ・外用
+ *
+ * のいずれかを判定する。
+ *
+ * 対象外の値は null とする。
  */
 
 function getDosageForm(item: MedicationData): DosageForm | null {
@@ -142,8 +171,10 @@ function uniqueStrings(values: string[]): string[] {
 
 /*
  * ==================================================
- * Fisher-Yates
+ * Fisher-Yatesシャッフル
  * ==================================================
+ *
+ * 配列の順番をランダムに入れ替える。
  */
 
 function shuffle<T>(items: T[]): T[] {
@@ -162,6 +193,9 @@ function shuffle<T>(items: T[]): T[] {
  * ==================================================
  * QuizState検証
  * ==================================================
+ *
+ * localStorageから読み込んだデータが、
+ * クイズ状態として利用できる形式か確認する。
  */
 
 function isValidQuizState(value: unknown): value is QuizState {
@@ -195,6 +229,99 @@ function isValidQuizState(value: unknown): value is QuizState {
 
 /*
  * ==================================================
+ * 回答判定
+ * ==================================================
+ *
+ * selectedMedications
+ *   → ユーザーが選択した薬品
+ *
+ * correctMedications
+ *   → 本来の正解薬品
+ *
+ * 判定結果として、
+ *
+ * ・正しく選択した薬品
+ * ・選択できなかった正解薬品
+ * ・余計に選択した薬品
+ * ・点数
+ * ・パーフェクトかどうか
+ *
+ * を返す。
+ *
+ * 薬品の選択順は判定に影響しない。
+ */
+
+function judgeAnswer(
+  selectedMedications: string[],
+  correctMedications: string[],
+): {
+  correctMedications: string[];
+  missedMedications: string[];
+  extraMedications: string[];
+  score: number;
+  isPerfect: boolean;
+} {
+  const selected = uniqueStrings(selectedMedications);
+  const correct = uniqueStrings(correctMedications);
+
+  /*
+   * ユーザーが選択した薬品のうち、
+   * 正解一覧にも存在する薬品を取得する。
+   */
+
+  const correctSelected = correct.filter((name) => selected.includes(name));
+
+  /*
+   * 正解一覧には存在するが、
+   * ユーザーが選択しなかった薬品を取得する。
+   */
+
+  const missed = correct.filter((name) => !selected.includes(name));
+
+  /*
+   * ユーザーが選択したが、
+   * 正解一覧には存在しない薬品を取得する。
+   */
+
+  const extra = selected.filter((name) => !correct.includes(name));
+
+  /*
+   * 点数計算
+   *
+   * 正解した薬品数
+   * ---------------- × 100
+   * 正解薬品の総数
+   *
+   * 余計な薬品を選択していても、
+   * 正解した薬品数に応じた点数は付与する。
+   */
+
+  const score =
+    correct.length === 0
+      ? 0
+      : Math.round((correctSelected.length / correct.length) * 100);
+
+  /*
+   * パーフェクト条件
+   *
+   * ・正解薬品をすべて選択
+   * ・余計な薬品を選択していない
+   */
+
+  const isPerfect =
+    correct.length > 0 && missed.length === 0 && extra.length === 0;
+
+  return {
+    correctMedications: correctSelected,
+    missedMedications: missed,
+    extraMedications: extra,
+    score,
+    isPerfect,
+  };
+}
+
+/*
+ * ==================================================
  * MedicationQuiz
  * ==================================================
  */
@@ -212,16 +339,16 @@ export default function MedicationQuiz({ data }: Props) {
 
   /*
    * ==================================================
-   * 剤型
+   * 剤型選択
    * ==================================================
    *
-   * 初期状態は
+   * 初期状態では、
    *
-   * 内服
-   * 注射
-   * 外用
+   * ・内服
+   * ・注射
+   * ・外用
    *
-   * 全て選択。
+   * のすべてを選択する。
    */
 
   const [selectedDosageForms, setSelectedDosageForms] = useState<DosageForm[]>([
@@ -232,7 +359,7 @@ export default function MedicationQuiz({ data }: Props) {
 
   /*
    * ==================================================
-   * 大分類絞り込み
+   * 大分類検索・選択
    * ==================================================
    */
 
@@ -244,7 +371,7 @@ export default function MedicationQuiz({ data }: Props) {
 
   /*
    * ==================================================
-   * 小分類絞り込み
+   * 小分類検索・選択
    * ==================================================
    */
 
@@ -256,7 +383,7 @@ export default function MedicationQuiz({ data }: Props) {
 
   /*
    * ==================================================
-   * 成分絞り込み
+   * 成分検索・選択
    * ==================================================
    */
 
@@ -286,8 +413,25 @@ export default function MedicationQuiz({ data }: Props) {
 
   /*
    * ==================================================
+   * 回答済み状態
+   * ==================================================
+   *
+   * false
+   *   → 回答入力中
+   *
+   * true
+   *   → 正誤判定済み
+   */
+
+  const [answerSubmitted, setAnswerSubmitted] = useState(false);
+
+  /*
+   * ==================================================
    * localStorage読み込み
    * ==================================================
+   *
+   * ページを再読み込みした場合でも、
+   * 途中まで進めたクイズを復元できるようにする。
    */
 
   useEffect(() => {
@@ -296,16 +440,42 @@ export default function MedicationQuiz({ data }: Props) {
 
       if (!saved) {
         setStorageChecked(true);
-
         return;
       }
 
       const parsed: unknown = JSON.parse(saved);
 
-      if (isValidQuizState(parsed)) {
-        setQuizState(parsed);
-      } else {
+      if (!isValidQuizState(parsed)) {
         localStorage.removeItem(STORAGE_KEY);
+        setStorageChecked(true);
+        return;
+      }
+
+      setQuizState(parsed);
+
+      /*
+       * 現在の問題に対する保存済み回答を取得する。
+       */
+
+      const currentAnswer = parsed.answers[parsed.currentQuestionIndex];
+
+      if (currentAnswer) {
+        setSelectedAnswers(currentAnswer.selectedMedications);
+
+        /*
+         * 正解・不正解のいずれかの結果が
+         * 保存されている場合は回答済みとする。
+         */
+
+        const hasResult =
+          currentAnswer.correctMedications.length > 0 ||
+          currentAnswer.missedMedications.length > 0 ||
+          currentAnswer.extraMedications.length > 0 ||
+          currentAnswer.isPerfect;
+
+        if (hasResult) {
+          setAnswerSubmitted(true);
+        }
       }
     } catch {
       localStorage.removeItem(STORAGE_KEY);
@@ -327,7 +497,6 @@ export default function MedicationQuiz({ data }: Props) {
 
     if (quizState === null) {
       localStorage.removeItem(STORAGE_KEY);
-
       return;
     }
 
@@ -372,7 +541,7 @@ export default function MedicationQuiz({ data }: Props) {
 
   /*
    * ==================================================
-   * 検索候補
+   * 大分類検索候補
    * ==================================================
    */
 
@@ -380,7 +549,7 @@ export default function MedicationQuiz({ data }: Props) {
     const keyword = largeCategorySearch.trim().toLowerCase();
 
     if (!keyword) {
-      return largeCategories;
+      return [];
     }
 
     return largeCategories.filter((value) =>
@@ -388,11 +557,17 @@ export default function MedicationQuiz({ data }: Props) {
     );
   }, [largeCategories, largeCategorySearch]);
 
+  /*
+   * ==================================================
+   * 小分類検索候補
+   * ==================================================
+   */
+
   const filteredSmallCategories = useMemo(() => {
     const keyword = smallCategorySearch.trim().toLowerCase();
 
     if (!keyword) {
-      return smallCategories;
+      return [];
     }
 
     return smallCategories.filter((value) =>
@@ -400,11 +575,17 @@ export default function MedicationQuiz({ data }: Props) {
     );
   }, [smallCategories, smallCategorySearch]);
 
+  /*
+   * ==================================================
+   * 成分検索候補
+   * ==================================================
+   */
+
   const filteredIngredients = useMemo(() => {
     const keyword = ingredientSearch.trim().toLowerCase();
 
     if (!keyword) {
-      return ingredients;
+      return [];
     }
 
     return ingredients.filter((value) => value.toLowerCase().includes(keyword));
@@ -412,7 +593,7 @@ export default function MedicationQuiz({ data }: Props) {
 
   /*
    * ==================================================
-   * 剤型変更
+   * 剤型選択変更
    * ==================================================
    */
 
@@ -428,7 +609,7 @@ export default function MedicationQuiz({ data }: Props) {
 
   /*
    * ==================================================
-   * 絞り込み選択
+   * 大分類選択変更
    * ==================================================
    */
 
@@ -440,6 +621,12 @@ export default function MedicationQuiz({ data }: Props) {
     );
   }
 
+  /*
+   * ==================================================
+   * 小分類選択変更
+   * ==================================================
+   */
+
   function toggleSmallCategory(value: string) {
     setSelectedSmallCategories((current) =>
       current.includes(value)
@@ -447,6 +634,12 @@ export default function MedicationQuiz({ data }: Props) {
         : [...current, value],
     );
   }
+
+  /*
+   * ==================================================
+   * 成分選択変更
+   * ==================================================
+   */
 
   function toggleIngredient(value: string) {
     setSelectedIngredients((current) =>
@@ -458,7 +651,7 @@ export default function MedicationQuiz({ data }: Props) {
 
   /*
    * ==================================================
-   * 絞り込み候補から削除
+   * 大分類選択解除
    * ==================================================
    */
 
@@ -468,11 +661,23 @@ export default function MedicationQuiz({ data }: Props) {
     );
   }
 
+  /*
+   * ==================================================
+   * 小分類選択解除
+   * ==================================================
+   */
+
   function removeSmallCategory(value: string) {
     setSelectedSmallCategories((current) =>
       current.filter((item) => item !== value),
     );
   }
+
+  /*
+   * ==================================================
+   * 成分選択解除
+   * ==================================================
+   */
 
   function removeIngredient(value: string) {
     setSelectedIngredients((current) =>
@@ -482,13 +687,25 @@ export default function MedicationQuiz({ data }: Props) {
 
   /*
    * ==================================================
-   * クイズ問題生成
+   * 問題生成
    * ==================================================
+   *
+   * まず剤型で対象データを絞り込む。
+   *
+   * その後、
+   *
+   * 大分類
+   * 小分類
+   * 成分
+   *
+   * の選択状態に応じて問題を作成する。
    */
 
   function createQuestions(): QuizQuestion[] {
     /*
+     * --------------------------------------------------
      * 剤型による絞り込み
+     * --------------------------------------------------
      */
 
     let targetData = data.filter((item) => {
@@ -498,9 +715,14 @@ export default function MedicationQuiz({ data }: Props) {
     });
 
     /*
-     * ==================================================
+     * --------------------------------------------------
      * 大分類レベル
-     * ==================================================
+     * --------------------------------------------------
+     *
+     * 大分類を1問として扱う。
+     *
+     * 小分類が選択されている場合は、
+     * その小分類に属する薬品だけを対象とする。
      */
 
     if (quizLevel === "large") {
@@ -539,14 +761,21 @@ export default function MedicationQuiz({ data }: Props) {
             .filter((value): value is DosageForm => value !== null),
         ),
 
-        correctMedications: uniqueStrings(items.map(getMedicationName)),
+        correctMedications: uniqueStrings(
+          items.map(getMedicationName).filter(Boolean),
+        ),
       }));
     }
 
     /*
-     * ==================================================
+     * --------------------------------------------------
      * 小分類レベル
-     * ==================================================
+     * --------------------------------------------------
+     *
+     * 小分類を1問として扱う。
+     *
+     * 大分類が選択されている場合は、
+     * その大分類に属する薬品だけを対象とする。
      */
 
     if (quizLevel === "small") {
@@ -585,20 +814,25 @@ export default function MedicationQuiz({ data }: Props) {
             .filter((value): value is DosageForm => value !== null),
         ),
 
-        correctMedications: uniqueStrings(items.map(getMedicationName)),
+        correctMedications: uniqueStrings(
+          items.map(getMedicationName).filter(Boolean),
+        ),
       }));
     }
 
     /*
-     * ==================================================
+     * --------------------------------------------------
      * 成分レベル
-     * ==================================================
+     * --------------------------------------------------
      *
-     * 大分類のみ
-     * 小分類のみ
-     * 大分類 + 小分類
+     * 成分を1問として扱う。
      *
-     * のいずれにも対応する。
+     * 大分類のみ、
+     * 小分類のみ、
+     * 大分類 + 小分類、
+     * 成分のみ、
+     *
+     * の組み合わせに対応する。
      */
 
     if (selectedLargeCategories.length > 0) {
@@ -648,59 +882,65 @@ export default function MedicationQuiz({ data }: Props) {
           .filter((value): value is DosageForm => value !== null),
       ),
 
-      correctMedications: uniqueStrings(items.map(getMedicationName)),
+      correctMedications: uniqueStrings(
+        items.map(getMedicationName).filter(Boolean),
+      ),
     }));
   }
 
   /*
    * ==================================================
-   * 出題開始
+   * クイズ開始
    * ==================================================
    */
 
   function handleStart() {
     /*
-     * 剤型を1つも選択していない場合
+     * 剤型が1つも選択されていない場合は、
+     * クイズを開始しない。
      */
 
     if (selectedDosageForms.length === 0) {
       alert("剤型を1つ以上選択してください。");
-
       return;
     }
 
     /*
-     * 問題生成
+     * 条件に応じて問題を作成する。
      */
 
     const questions = createQuestions();
 
     /*
-     * 問題が存在しない場合
+     * 問題が1問も作成できない場合は、
+     * クイズを開始しない。
      */
 
     if (questions.length === 0) {
       alert("条件に該当する問題がありません。");
-
       return;
     }
 
     /*
-     * ランダム出題
-     *
-     * 5問 / 10問 / 全問は上限。
+     * 問題をランダムに並び替える。
      */
 
     const shuffled = shuffle(questions);
+
+    /*
+     * 指定問題数を上限として問題を切り出す。
+     *
+     * -1の場合は全問出題する。
+     */
 
     const finalQuestions =
       questionCount === -1 ? shuffled : shuffled.slice(0, questionCount);
 
     /*
-     * 回答状態初期化
+     * 各問題の回答状態を初期化する。
      */
 
-    const answers = finalQuestions.map(() => ({
+    const answers: QuizAnswer[] = finalQuestions.map(() => ({
       selectedMedications: [],
 
       correctMedications: [],
@@ -715,7 +955,7 @@ export default function MedicationQuiz({ data }: Props) {
     }));
 
     /*
-     * クイズ状態
+     * 新しいクイズ状態を作成する。
      */
 
     const newQuizState: QuizState = {
@@ -730,9 +970,49 @@ export default function MedicationQuiz({ data }: Props) {
 
     setQuizState(newQuizState);
 
+    /*
+     * 前回の回答入力をクリアする。
+     */
+
     setSelectedAnswers([]);
 
     setAnswerSearch("");
+
+    setAnswerSubmitted(false);
+  }
+
+  /*
+   * ==================================================
+   * 同じ条件で再出題
+   * ==================================================
+   *
+   * 現在の出題設定をそのまま利用して、
+   * 新しい問題セットを作成する。
+   */
+
+  function handleRestartSameConditions() {
+    handleStart();
+  }
+
+  /*
+   * ==================================================
+   * 出題設定へ戻る
+   * ==================================================
+   *
+   * 現在のクイズ状態を破棄して、
+   * 出題設定画面へ戻る。
+   */
+
+  function handleBackToSettings() {
+    localStorage.removeItem(STORAGE_KEY);
+
+    setQuizState(null);
+
+    setSelectedAnswers([]);
+
+    setAnswerSearch("");
+
+    setAnswerSubmitted(false);
   }
 
   /*
@@ -747,7 +1027,7 @@ export default function MedicationQuiz({ data }: Props) {
 
   /*
    * ==================================================
-   * クイズ画面
+   * クイズ中
    * ==================================================
    */
 
@@ -756,11 +1036,49 @@ export default function MedicationQuiz({ data }: Props) {
 
     /*
      * ==================================================
-     * 問題終了
+     * クイズ終了
      * ==================================================
+     *
+     * 全問題への回答が終了した場合、
+     * 最終結果を表示する。
      */
 
     if (!currentQuestion) {
+      /*
+       * 全問題の点数を合計する。
+       */
+
+      const totalScore = quizState.answers.reduce(
+        (total, answer) => total + answer.score,
+        0,
+      );
+
+      /*
+       * パーフェクトだった問題数を取得する。
+       */
+
+      const perfectCount = quizState.answers.filter(
+        (answer) => answer.isPerfect,
+      ).length;
+
+      /*
+       * 平均点を計算する。
+       */
+
+      const scoreRate =
+        quizState.answers.length === 0
+          ? 0
+          : Math.round(totalScore / quizState.answers.length);
+
+      /*
+       * パーフェクト率を計算する。
+       */
+
+      const perfectRate =
+        quizState.answers.length === 0
+          ? 0
+          : Math.round((perfectCount / quizState.answers.length) * 100);
+
       return (
         <main className={styles.container}>
           <div className={styles.card}>
@@ -768,21 +1086,94 @@ export default function MedicationQuiz({ data }: Props) {
 
             <p>クイズが終了しました。</p>
 
+            {/* =========================
+                総合結果
+            ========================== */}
+
+            <div className={styles.resultSummary}>
+              <div className={styles.resultSummaryItem}>
+                <span>点数率</span>
+
+                <strong>{scoreRate}%</strong>
+              </div>
+
+              <div className={styles.resultSummaryItem}>
+                <span>パーフェクト率</span>
+
+                <strong>{perfectRate}%</strong>
+              </div>
+
+              <div className={styles.resultSummaryItem}>
+                <span>パーフェクト</span>
+
+                <strong>
+                  {perfectCount} / {quizState.answers.length}
+                </strong>
+              </div>
+            </div>
+
+            {/* =========================
+                問題別結果
+            ========================== */}
+
+            <div className={styles.resultSection}>
+              <h2 className={styles.resultSectionTitle}>問題別結果</h2>
+
+              <div className={styles.questionResultList}>
+                {quizState.questions.map((question, index) => {
+                  const answer = quizState.answers[index];
+
+                  return (
+                    <div
+                      key={question.id}
+                      className={styles.questionResultCard}
+                    >
+                      <div className={styles.questionResultHeader}>
+                        <span>問題 {index + 1}</span>
+
+                        <strong>{answer.score}点</strong>
+                      </div>
+
+                      <div className={styles.questionResultCondition}>
+                        {question.level === "large" && "大分類："}
+
+                        {question.level === "small" && "小分類："}
+
+                        {question.level === "ingredient" && "成分："}
+
+                        {question.questionValue}
+                      </div>
+
+                      {answer.isPerfect && (
+                        <div className={styles.perfectResult}>
+                          🎉 パーフェクト
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* =========================
+                操作
+            ========================== */}
+
             <div className={styles.quizActions}>
               <button
                 type="button"
                 className={styles.primaryButton}
-                onClick={() => {
-                  localStorage.removeItem(STORAGE_KEY);
-
-                  setQuizState(null);
-
-                  setSelectedAnswers([]);
-
-                  setAnswerSearch("");
-                }}
+                onClick={handleRestartSameConditions}
               >
-                再度出題
+                もう一度同じ条件で出題
+              </button>
+
+              <button
+                type="button"
+                className={styles.secondaryButton}
+                onClick={handleBackToSettings}
+              >
+                出題設定に戻る
               </button>
             </div>
           </div>
@@ -792,17 +1183,26 @@ export default function MedicationQuiz({ data }: Props) {
 
     /*
      * ==================================================
-     * 回答候補
+     * 現在の回答状態
+     * ==================================================
+     */
+
+    const currentAnswer = quizState.answers[quizState.currentQuestionIndex];
+
+    /*
+     * ==================================================
+     * 回答候補検索
      * ==================================================
      */
 
     const keyword = answerSearch.trim().toLowerCase();
 
     /*
-     * 現在の問題に関係する薬品を
-     * 全データから候補として取得する。
+     * 現在の問題に設定されている剤型に
+     * 該当する薬品を候補として取得する。
      *
-     * 剤型条件も適用。
+     * 検索文字が入力されていない場合は
+     * 候補を表示しない。
      */
 
     const answerCandidates = uniqueStrings(
@@ -820,25 +1220,34 @@ export default function MedicationQuiz({ data }: Props) {
     )
       .filter((name) => {
         if (!keyword) {
-          return true;
+          return false;
         }
 
         return name.toLowerCase().includes(keyword);
       })
       /*
-       * 既に選択した薬品は
-       * 候補リストから消す。
+       * すでに選択した薬品は
+       * 候補一覧から除外する。
        */
       .filter((name) => !selectedAnswers.includes(name))
       .slice(0, 50);
 
     /*
      * ==================================================
-     * 薬品選択
+     * 回答選択
      * ==================================================
      */
 
     function toggleAnswer(medicationName: string) {
+      /*
+       * 回答済みの場合は、
+       * 回答内容を変更できないようにする。
+       */
+
+      if (answerSubmitted) {
+        return;
+      }
+
       setSelectedAnswers((current) => {
         if (current.includes(medicationName)) {
           return current.filter((name) => name !== medicationName);
@@ -856,10 +1265,25 @@ export default function MedicationQuiz({ data }: Props) {
 
     function handleAnswer() {
       /*
-       * Step 5では
-       * 回答状態を保存するところまで。
-       *
-       * 正誤判定は次Stepで実装。
+       * すでに回答済みの場合は、
+       * 二重判定を行わない。
+       */
+
+      if (answerSubmitted) {
+        return;
+      }
+
+      /*
+       * 現在の回答を正誤判定する。
+       */
+
+      const result = judgeAnswer(
+        selectedAnswers,
+        currentQuestion.correctMedications,
+      );
+
+      /*
+       * 判定結果をクイズ状態へ保存する。
        */
 
       setQuizState((current) => {
@@ -872,7 +1296,17 @@ export default function MedicationQuiz({ data }: Props) {
         answers[current.currentQuestionIndex] = {
           ...answers[current.currentQuestionIndex],
 
-          selectedMedications: selectedAnswers,
+          selectedMedications: [...selectedAnswers],
+
+          correctMedications: result.correctMedications,
+
+          missedMedications: result.missedMedications,
+
+          extraMedications: result.extraMedications,
+
+          score: result.score,
+
+          isPerfect: result.isPerfect,
         };
 
         return {
@@ -881,6 +1315,51 @@ export default function MedicationQuiz({ data }: Props) {
           answers,
         };
       });
+
+      /*
+       * 回答結果表示へ切り替える。
+       */
+
+      setAnswerSubmitted(true);
+    }
+
+    /*
+     * ==================================================
+     * 次の問題へ進む
+     * ==================================================
+     */
+
+    function handleNextQuestion() {
+      /*
+       * 回答済みでなければ、
+       * 次の問題へ進めない。
+       */
+
+      if (!answerSubmitted) {
+        return;
+      }
+
+      setQuizState((current) => {
+        if (!current) {
+          return current;
+        }
+
+        return {
+          ...current,
+
+          currentQuestionIndex: current.currentQuestionIndex + 1,
+        };
+      });
+
+      /*
+       * 次の問題用に回答入力をリセットする。
+       */
+
+      setSelectedAnswers([]);
+
+      setAnswerSearch("");
+
+      setAnswerSubmitted(false);
     }
 
     /*
@@ -892,6 +1371,10 @@ export default function MedicationQuiz({ data }: Props) {
     return (
       <main className={styles.container}>
         <div className={styles.card}>
+          {/* =========================
+              問題ヘッダー
+          ========================== */}
+
           <div className={styles.questionHeader}>
             <h1 className={styles.heading}>💊 医薬品クイズ</h1>
 
@@ -907,7 +1390,7 @@ export default function MedicationQuiz({ data }: Props) {
 
           <div className={styles.question}>
             <div className={styles.questionLabel}>
-              次の条件に該当する 薬品名を全て答えてください
+              次の条件に該当する薬品名を 全て答えてください
             </div>
 
             <div className={styles.questionCondition}>
@@ -921,79 +1404,195 @@ export default function MedicationQuiz({ data }: Props) {
             </div>
           </div>
 
-          {/* =========================
-              回答
-          ========================== */}
+          {/* ==================================================
+              回答入力画面
+          ================================================== */}
 
-          <div className={styles.answerArea}>
-            <div className={styles.answerGuide}>
-              薬品名を入力して候補から 選択してください。
-            </div>
+          {!answerSubmitted && (
+            <div className={styles.answerArea}>
+              <div className={styles.answerGuide}>
+                薬品名を入力して候補から 選択してください。
+              </div>
 
-            <div className={styles.answerSearchGroup}>
-              <input
-                type="text"
-                className={styles.searchInput}
-                value={answerSearch}
-                onChange={(event) => setAnswerSearch(event.target.value)}
-                placeholder="薬品名を検索"
-              />
+              <div className={styles.answerSearchGroup}>
+                <input
+                  type="text"
+                  className={styles.searchInput}
+                  value={answerSearch}
+                  onChange={(event) => setAnswerSearch(event.target.value)}
+                  placeholder="薬品名を検索"
+                />
 
-              {answerCandidates.length > 0 && (
-                <div className={styles.answerCandidateList}>
-                  {answerCandidates.map((name) => (
-                    <label key={name} className={styles.answerCandidateItem}>
-                      <input
-                        type="checkbox"
-                        checked={false}
-                        onChange={() => toggleAnswer(name)}
-                      />
+                {answerCandidates.length > 0 && (
+                  <div className={styles.answerCandidateList}>
+                    {answerCandidates.map((name) => (
+                      <label key={name} className={styles.answerCandidateItem}>
+                        <input
+                          type="checkbox"
+                          checked={false}
+                          onChange={() => toggleAnswer(name)}
+                        />
 
-                      <span>{name}</span>
-                    </label>
+                        <span>{name}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* =========================
+                  選択中の薬品
+              ========================== */}
+
+              {selectedAnswers.length > 0 && (
+                <div className={styles.answerSelectedList}>
+                  <h2 className={styles.answerSelectedTitle}>選択中</h2>
+
+                  {selectedAnswers.map((name) => (
+                    <div key={name} className={styles.answerSelectedCard}>
+                      <span className={styles.answerSelectedName}>{name}</span>
+
+                      <button
+                        type="button"
+                        className={styles.removeButton}
+                        onClick={() => toggleAnswer(name)}
+                      >
+                        チェックを外す
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
-            </div>
 
-            {/* =========================
-                選択中
-            ========================== */}
+              {/* =========================
+                  回答ボタン
+              ========================== */}
 
-            {selectedAnswers.length > 0 && (
-              <div className={styles.answerSelectedList}>
-                <h2 className={styles.answerSelectedTitle}>選択中</h2>
-
-                {selectedAnswers.map((name) => (
-                  <div key={name} className={styles.answerSelectedCard}>
-                    <span className={styles.answerSelectedName}>{name}</span>
-
-                    <button
-                      type="button"
-                      className={styles.removeButton}
-                      onClick={() => toggleAnswer(name)}
-                    >
-                      チェックを外す
-                    </button>
-                  </div>
-                ))}
+              <div className={styles.quizActions}>
+                <button
+                  type="button"
+                  className={styles.primaryButton}
+                  onClick={handleAnswer}
+                >
+                  回答する
+                </button>
               </div>
-            )}
-
-            {/* =========================
-                操作
-            ========================== */}
-
-            <div className={styles.quizActions}>
-              <button
-                type="button"
-                className={styles.primaryButton}
-                onClick={handleAnswer}
-              >
-                回答する
-              </button>
             </div>
-          </div>
+          )}
+
+          {/* ==================================================
+              回答結果
+          ================================================== */}
+
+          {answerSubmitted && (
+            <div className={styles.answerResultArea}>
+              {/* =========================
+                  得点・判定
+              ========================== */}
+
+              <div className={styles.answerResultHeader}>
+                {currentAnswer.isPerfect ? (
+                  <>
+                    <div className={styles.perfectResult}>
+                      🎉 パーフェクト！
+                    </div>
+
+                    <div className={styles.scoreResult}>100点</div>
+                  </>
+                ) : (
+                  <>
+                    <div className={styles.normalResult}>結果</div>
+
+                    <div className={styles.scoreResult}>
+                      {currentAnswer.score}点
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* =========================
+                  正解薬品
+              ========================== */}
+
+              <div className={styles.resultSection}>
+                <h2 className={styles.resultSectionTitle}>正解薬品</h2>
+
+                <div className={styles.resultMedicationList}>
+                  {currentQuestion.correctMedications.map((name) => (
+                    <div
+                      key={name}
+                      className={`${styles.resultMedicationCard} ${styles.correctMedication}`}
+                    >
+                      <span>{name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* =========================
+                  追加できなかった薬品
+              ========================== */}
+
+              {currentAnswer.missedMedications.length > 0 && (
+                <div className={styles.resultSection}>
+                  <h2 className={styles.resultSectionTitle}>
+                    追加できなかった薬品
+                  </h2>
+
+                  <div className={styles.resultMedicationList}>
+                    {currentAnswer.missedMedications.map((name) => (
+                      <div
+                        key={name}
+                        className={`${styles.resultMedicationCard} ${styles.missedMedication}`}
+                      >
+                        <span>{name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* =========================
+                  余計に選択した薬品
+              ========================== */}
+
+              {currentAnswer.extraMedications.length > 0 && (
+                <div className={styles.resultSection}>
+                  <h2 className={styles.resultSectionTitle}>
+                    余計に選択した薬品
+                  </h2>
+
+                  <div className={styles.resultMedicationList}>
+                    {currentAnswer.extraMedications.map((name) => (
+                      <div
+                        key={name}
+                        className={`${styles.resultMedicationCard} ${styles.extraMedication}`}
+                      >
+                        <span>{name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* =========================
+                  次の問題
+              ========================== */}
+
+              <div className={styles.quizActions}>
+                <button
+                  type="button"
+                  className={styles.primaryButton}
+                  onClick={handleNextQuestion}
+                >
+                  {quizState.currentQuestionIndex + 1 <
+                  quizState.questions.length
+                    ? "次の問題へ"
+                    : "結果を見る"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     );
@@ -1010,9 +1609,9 @@ export default function MedicationQuiz({ data }: Props) {
       <div className={styles.card}>
         <h1 className={styles.heading}>💊 医薬品クイズ</h1>
 
-        {/* =========================
-            出題レベル
-        ========================== */}
+        {/* ==================================================
+            1. 出題レベル
+        ================================================== */}
 
         <section className={styles.settingSection}>
           <h2 className={styles.settingTitle}>1. 出題レベル</h2>
@@ -1050,9 +1649,9 @@ export default function MedicationQuiz({ data }: Props) {
           </div>
         </section>
 
-        {/* =========================
-            剤型
-        ========================== */}
+        {/* ==================================================
+            2. 剤型
+        ================================================== */}
 
         <section className={styles.settingSection}>
           <h2 className={styles.settingTitle}>2. 剤型</h2>
@@ -1247,7 +1846,7 @@ export default function MedicationQuiz({ data }: Props) {
         )}
 
         {/* ==================================================
-            出題問題数
+            3. 出題問題数
         ================================================== */}
 
         <section className={styles.settingSection}>

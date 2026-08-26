@@ -1,3 +1,7 @@
+/* ==================================================
+   全体
+================================================== */
+
 .container {
   min-height: 100vh;
   padding: 40px 20px;
@@ -14,130 +18,142 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 }
 
+/* ==================================================
+   見出し
+================================================== */
+
 .heading {
-  margin: 0 0 24px;
+  margin: 0;
   font-size: 28px;
   font-weight: bold;
 }
 
+.questionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.questionNumber {
+  padding: 8px 14px;
+  background: #f0f2f5;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
 /* ==================================================
-   出題設定
+   設定画面
 ================================================== */
 
 .settingSection {
-  margin-bottom: 28px;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
 }
 
 .settingTitle {
   margin: 0 0 16px;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: bold;
 }
 
 .settingDescription {
-  margin: 0 0 16px;
-  color: #555;
-  font-size: 14px;
+  margin: 12px 0 0;
+  color: #666666;
+  font-size: 13px;
   line-height: 1.6;
 }
 
 /* ==================================================
-   出題レベル
+   ラジオボタン
 ================================================== */
 
 .levelGroup {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 16px;
 }
 
 .levelLabel {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  gap: 8px;
   cursor: pointer;
-  background: #fff;
-}
-
-.levelLabel:hover {
-  background: #f5f5f5;
+  font-size: 15px;
 }
 
 /* ==================================================
-   剤型選択
+   剤型
 ================================================== */
 
 .dosageFormGroup {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 16px;
 }
 
 .dosageFormLabel {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  gap: 8px;
   cursor: pointer;
-  background: #fff;
-}
-
-.dosageFormLabel:hover {
-  background: #f5f5f5;
+  font-size: 15px;
 }
 
 /* ==================================================
-   検索候補
+   検索
 ================================================== */
 
 .searchGroup {
   position: relative;
-  margin-top: 16px;
-}
-
-.searchLabel {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: bold;
 }
 
 .searchInput {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 16px;
   box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #cfd4dc;
+  border-radius: 8px;
+  outline: none;
+  background: #ffffff;
+  font-size: 15px;
 }
 
 .searchInput:focus {
-  outline: none;
-  border-color: #0070f3;
-  box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.1);
+  border-color: #4f7cff;
+  box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.12);
 }
 
+.searchInput:disabled {
+  background: #f1f3f5;
+  cursor: not-allowed;
+}
+
+/* ==================================================
+   候補一覧
+================================================== */
+
 .candidateList {
+  max-height: 240px;
   margin-top: 8px;
-  border: 1px solid #ddd;
+  overflow-y: auto;
+  border: 1px solid #dfe3e8;
   border-radius: 8px;
-  background: #fff;
-  overflow: hidden;
+  background: #ffffff;
 }
 
 .candidateItem {
   display: flex;
   align-items: center;
-  width: 100%;
-  padding: 10px 12px;
-  border: none;
-  border-bottom: 1px solid #eee;
-  background: #fff;
-  text-align: left;
+  gap: 10px;
+  min-height: 42px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #eeeeee;
   cursor: pointer;
   font-size: 14px;
 }
@@ -147,15 +163,11 @@
 }
 
 .candidateItem:hover {
-  background: #f5f7fa;
-}
-
-.candidateItem input {
-  margin-right: 8px;
+  background: #f7f9fc;
 }
 
 /* ==================================================
-   選択中リスト
+   選択中
 ================================================== */
 
 .selectedList {
@@ -163,8 +175,8 @@
 }
 
 .selectedListTitle {
-  margin: 0 0 8px;
-  font-size: 15px;
+  margin: 0 0 10px;
+  font-size: 14px;
   font-weight: bold;
 }
 
@@ -173,75 +185,67 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 12px;
   margin-bottom: 8px;
-  border: 1px solid #ddd;
+  padding: 10px 12px;
+  border: 1px solid #dfe3e8;
   border-radius: 8px;
   background: #f8fafc;
 }
 
 .selectedListName {
-  flex: 1;
-  word-break: break-word;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 14px;
 }
+
+/* ==================================================
+   削除ボタン
+================================================== */
 
 .removeButton {
   flex-shrink: 0;
   padding: 6px 10px;
-  border: 1px solid #ccc;
+  border: 1px solid #d0d5dc;
   border-radius: 6px;
-  background: #fff;
+  background: #ffffff;
+  color: #555555;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .removeButton:hover {
-  background: #f0f0f0;
+  background: #f1f3f5;
+}
+
+.removeButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ==================================================
-   問題画面
+   問題
 ================================================== */
-
-.questionHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.questionNumber {
-  font-size: 16px;
-  font-weight: bold;
-  color: #555;
-  white-space: nowrap;
-}
 
 .question {
   margin-bottom: 28px;
   padding: 24px;
+  border: 1px solid #dfe3e8;
   border-radius: 10px;
-  background: #f5f7fa;
+  background: #f8fafc;
 }
 
 .questionLabel {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  color: #555555;
   font-size: 14px;
-  color: #555;
-}
-
-.questionText {
-  margin: 0;
-  font-size: 28px;
-  font-weight: bold;
+  line-height: 1.6;
 }
 
 .questionCondition {
-  margin-top: 12px;
-  font-size: 17px;
+  font-size: 24px;
   font-weight: bold;
-  line-height: 1.6;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 /* ==================================================
@@ -253,40 +257,34 @@
 }
 
 .answerGuide {
-  margin-bottom: 16px;
-  color: #555;
+  margin-bottom: 12px;
+  color: #555555;
   font-size: 14px;
   line-height: 1.6;
 }
-
-/* ==================================================
-   回答候補
-================================================== */
 
 .answerSearchGroup {
   position: relative;
 }
 
 .answerCandidateList {
-  margin-top: 8px;
   max-height: 300px;
+  margin-top: 8px;
   overflow-y: auto;
-  border: 1px solid #ddd;
+  border: 1px solid #dfe3e8;
   border-radius: 8px;
-  background: #fff;
+  background: #ffffff;
 }
 
 .answerCandidateItem {
   display: flex;
   align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 12px;
-  border: none;
-  border-bottom: 1px solid #eee;
-  background: #fff;
-  text-align: left;
+  gap: 10px;
+  min-height: 42px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #eeeeee;
   cursor: pointer;
+  font-size: 14px;
 }
 
 .answerCandidateItem:last-child {
@@ -294,15 +292,15 @@
 }
 
 .answerCandidateItem:hover {
-  background: #f5f7fa;
+  background: #f7f9fc;
 }
 
 /* ==================================================
-   回答選択中リスト
+   回答選択中
 ================================================== */
 
 .answerSelectedList {
-  margin-top: 16px;
+  margin-top: 20px;
 }
 
 .answerSelectedTitle {
@@ -316,227 +314,260 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 12px;
   margin-bottom: 8px;
-  border: 1px solid #ccc;
+  padding: 10px 12px;
+  border: 1px solid #dfe3e8;
   border-radius: 8px;
   background: #f8fafc;
 }
 
 .answerSelectedName {
-  flex: 1;
-  word-break: break-word;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 14px;
 }
 
 /* ==================================================
-   判定表示
-================================================== */
-
-.resultSection {
-  margin-top: 24px;
-}
-
-.correctDrug {
-  padding: 12px 16px;
-  margin-bottom: 8px;
-  border-radius: 8px;
-  background: #e8f5e9;
-  border: 1px solid #81c784;
-  color: #2e7d32;
-}
-
-.missedDrug {
-  padding: 12px 16px;
-  margin-bottom: 8px;
-  border-radius: 8px;
-  background: #ffebee;
-  border: 1px solid #e57373;
-  color: #c62828;
-}
-
-.extraDrug {
-  padding: 12px 16px;
-  margin-bottom: 8px;
-  border-radius: 8px;
-  background: #ffebee;
-  border: 1px solid #e57373;
-  color: #c62828;
-}
-
-.resultTitle {
-  margin: 0 0 8px;
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.resultDrugList {
-  margin: 0;
-  padding-left: 20px;
-}
-
-.resultDrugList li {
-  margin-bottom: 4px;
-}
-
-/* ==================================================
-   結果画面
-================================================== */
-
-.resultSummary {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 28px;
-}
-
-.summaryItem {
-  padding: 16px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  text-align: center;
-  background: #fafafa;
-}
-
-.summaryLabel {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 13px;
-  color: #666;
-}
-
-.summaryValue {
-  display: block;
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.perfect {
-  margin-bottom: 24px;
-  padding: 18px;
-  border-radius: 10px;
-  background: #e8f5e9;
-  border: 1px solid #81c784;
-  color: #2e7d32;
-  text-align: center;
-  font-size: 20px;
-  font-weight: bold;
-}
-
-/* ==================================================
-   結果一覧
-================================================== */
-
-.resultList {
-  margin-top: 24px;
-}
-
-.resultListItem {
-  margin-bottom: 16px;
-  padding: 16px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  background: #fff;
-}
-
-.resultListQuestion {
-  margin-bottom: 10px;
-  font-weight: bold;
-}
-
-.resultListSection {
-  margin-top: 10px;
-}
-
-.resultListLabel {
-  margin-bottom: 6px;
-  font-size: 13px;
-  font-weight: bold;
-  color: #555;
-}
-
-/* ==================================================
-   ボタン
+   操作ボタン
 ================================================== */
 
 .quizActions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 24px;
+  gap: 12px;
+  margin-top: 28px;
 }
 
-.primaryButton,
-.secondaryButton,
-.dangerButton {
+.primaryButton {
   min-height: 44px;
-  padding: 10px 20px;
+  padding: 10px 22px;
+  border: none;
   border-radius: 8px;
+  background: #2563eb;
+  color: #ffffff;
   cursor: pointer;
   font-size: 15px;
   font-weight: bold;
 }
 
-.primaryButton {
-  border: none;
-  background: #0070f3;
-  color: #fff;
-}
-
 .primaryButton:hover {
-  background: #005fcc;
+  background: #1d4ed8;
 }
 
-.secondaryButton {
-  border: 1px solid #ccc;
-  background: #fff;
-  color: #333;
-}
-
-.secondaryButton:hover {
-  background: #f5f5f5;
-}
-
-.dangerButton {
-  border: none;
-  background: #d32f2f;
-  color: #fff;
-}
-
-.dangerButton:hover {
-  background: #b71c1c;
+.primaryButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ==================================================
-   エラーメッセージ
+   回答結果
 ================================================== */
 
-.errorMessage {
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: 8px;
-  background: #ffebee;
-  color: #c62828;
-  font-size: 14px;
+.answerResultArea {
+  margin-top: 24px;
+}
+
+.answerResultHeader {
+  margin-bottom: 28px;
+  padding: 24px;
+  border-radius: 10px;
+  background: #f8fafc;
+  text-align: center;
+}
+
+.perfectResult {
+  margin-bottom: 8px;
+  color: #16a34a;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.normalResult {
+  margin-bottom: 8px;
+  color: #374151;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.scoreResult {
+  font-size: 32px;
+  font-weight: bold;
 }
 
 /* ==================================================
-   データ確認用
+   結果セクション
 ================================================== */
 
-.card pre {
+.resultSection {
   margin-top: 20px;
-  padding: 16px;
-  overflow-x: auto;
-  background: #f5f5f5;
+  padding: 20px;
+  border: 1px solid #dfe3e8;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.resultSectionTitle {
+  margin: 0 0 14px;
+  font-size: 17px;
+  font-weight: bold;
+}
+
+.resultMedicationList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.resultMedicationCard {
+  padding: 11px 14px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
 }
 
 /* ==================================================
-   スマートフォン
+   正解薬品
 ================================================== */
 
-@media (max-width: 600px) {
+.correctMedication {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+}
+
+/* ==================================================
+   追加できなかった薬品
+================================================== */
+
+.missedMedication {
+  border: 1px solid #fde68a;
+  background: #fffbeb;
+}
+
+/* ==================================================
+   余計に選択した薬品
+================================================== */
+
+.extraMedication {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+}
+
+/* ==================================================
+   クイズ全体結果
+================================================== */
+
+.resultSummary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.resultSummaryItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
+  padding: 16px;
+  border: 1px solid #dfe3e8;
+  border-radius: 10px;
+  background: #f8fafc;
+  text-align: center;
+}
+
+.resultSummaryItem span {
+  margin-bottom: 8px;
+  color: #666666;
+  font-size: 13px;
+}
+
+.resultSummaryItem strong {
+  font-size: 24px;
+}
+
+/* ==================================================
+   問題別結果
+================================================== */
+
+.questionResults {
+  margin-top: 28px;
+}
+
+.questionResultsTitle {
+  margin: 0 0 16px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.questionResultCard {
+  margin-bottom: 14px;
+  padding: 18px;
+  border: 1px solid #dfe3e8;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.questionResultHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.questionResultNumber {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.questionResultScore {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.questionResultCondition {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f8fafc;
+  font-size: 14px;
+  font-weight: bold;
+  overflow-wrap: anywhere;
+}
+
+.questionResultDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.questionResultDetailItem {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.questionResultDetailLabel {
+  margin-right: 6px;
+  font-weight: bold;
+}
+
+/* ==================================================
+   結果画面のボタン
+================================================== */
+
+.resultActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+/* ==================================================
+   レスポンシブ
+================================================== */
+
+@media (max-width: 700px) {
   .container {
     padding: 20px 12px;
   }
@@ -552,43 +583,56 @@
 
   .questionHeader {
     align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
   }
 
-  .questionText {
-    font-size: 24px;
+  .questionNumber {
+    align-self: flex-end;
   }
 
   .question {
     padding: 18px;
   }
 
-  .resultSummary {
-    grid-template-columns: repeat(2, 1fr);
+  .questionCondition {
+    font-size: 20px;
+  }
+
+  .levelGroup,
+  .dosageFormGroup {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .selectedListCard,
+  .answerSelectedCard {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .removeButton {
+    width: 100%;
   }
 
   .quizActions {
     flex-direction: column;
   }
 
-  .primaryButton,
-  .secondaryButton,
-  .dangerButton {
+  .primaryButton {
     width: 100%;
   }
 
-  .levelGroup,
-  .dosageFormGroup {
+  .resultSummary {
+    grid-template-columns: 1fr;
+  }
+
+  .questionResultHeader {
+    align-items: flex-start;
     flex-direction: column;
   }
 
-  .levelLabel,
-  .dosageFormLabel {
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .selectedListCard,
-  .answerSelectedCard {
-    align-items: flex-start;
+  .resultSection {
+    padding: 16px;
   }
 }
