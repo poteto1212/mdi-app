@@ -1,5 +1,6 @@
 import { getMedications } from "@/lib/repositories/medicationRepository";
 import MedicationQuiz from "./MedicationQuiz";
+import { requireLogin } from "@/lib/auth/authorization";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -9,14 +10,8 @@ type MedicationData = {
 };
 
 export default async function MedicationQuizPage() {
-  /*
-   * =========================
-   * スプレッドシートから取得
-   * =========================
-   */
-
+  await requireLogin();
   const data = await getMedications();
-
   /*
    * =========================
    * クイズ対象データ

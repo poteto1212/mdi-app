@@ -100,7 +100,7 @@ export default async function Home() {
 
           {/* 薬品クイズ */}
           {isLoggedIn && (
-            <Link href="/quiz/medications" className={styles.menuItem}>
+            <Link href="/medicationquiz" className={styles.menuItem}>
               <div className={styles.menuIcon}>💊</div>
 
               <div>
