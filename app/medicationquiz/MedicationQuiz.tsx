@@ -39,20 +39,6 @@ type QuizLevel = "large" | "small" | "ingredient";
  * ==================================================
  * クイズ問題
  * ==================================================
- *
- * 1問分の問題情報を保持する。
- *
- * level
- *   → 大分類 / 小分類 / 成分
- *
- * questionValue
- *   → 実際に表示する分類名・成分名
- *
- * dosageForms
- *   → この問題に含まれる薬品の剤型
- *
- * correctMedications
- *   → この問題の正解となる薬品名一覧
  */
 
 type QuizQuestion = {
@@ -71,8 +57,6 @@ type QuizQuestion = {
  * ==================================================
  * 回答情報
  * ==================================================
- *
- * 1問に対するユーザーの回答結果を保持する。
  */
 
 type QuizAnswer = {
@@ -127,16 +111,6 @@ function getText(item: MedicationData, key: string): string {
  * ==================================================
  * 剤型判定
  * ==================================================
- *
- * 薬品マスタの「剤型」列から、
- *
- * ・内服
- * ・注射
- * ・外用
- *
- * のいずれかを判定する。
- *
- * 対象外の値は null とする。
  */
 
 function getDosageForm(item: MedicationData): DosageForm | null {
@@ -171,10 +145,29 @@ function uniqueStrings(values: string[]): string[] {
 
 /*
  * ==================================================
- * Fisher-Yatesシャッフル
+ * 剤型配列の重複削除
  * ==================================================
  *
- * 配列の順番をランダムに入れ替える。
+ * null を除外したうえで DosageForm[] として返す。
+ *
+ * この
+ *
+ * .filter((value): value is DosageForm => value !== null)
+ *
+ * は TypeScript に
+ * 「null は除外済み」と認識させるため必要。
+ */
+
+function uniqueDosageForms(values: Array<DosageForm | null>): DosageForm[] {
+  return Array.from(
+    new Set(values.filter((value): value is DosageForm => value !== null)),
+  );
+}
+
+/*
+ * ==================================================
+ * Fisher-Yatesシャッフル
+ * ==================================================
  */
 
 function shuffle<T>(items: T[]): T[] {
@@ -193,9 +186,6 @@ function shuffle<T>(items: T[]): T[] {
  * ==================================================
  * QuizState検証
  * ==================================================
- *
- * localStorageから読み込んだデータが、
- * クイズ状態として利用できる形式か確認する。
  */
 
 function isValidQuizState(value: unknown): value is QuizState {
@@ -231,24 +221,6 @@ function isValidQuizState(value: unknown): value is QuizState {
  * ==================================================
  * 回答判定
  * ==================================================
- *
- * selectedMedications
- *   → ユーザーが選択した薬品
- *
- * correctMedications
- *   → 本来の正解薬品
- *
- * 判定結果として、
- *
- * ・正しく選択した薬品
- * ・選択できなかった正解薬品
- * ・余計に選択した薬品
- * ・点数
- * ・パーフェクトかどうか
- *
- * を返す。
- *
- * 薬品の選択順は判定に影響しない。
  */
 
 function judgeAnswer(
@@ -264,49 +236,16 @@ function judgeAnswer(
   const selected = uniqueStrings(selectedMedications);
   const correct = uniqueStrings(correctMedications);
 
-  /*
-   * ユーザーが選択した薬品のうち、
-   * 正解一覧にも存在する薬品を取得する。
-   */
-
   const correctSelected = correct.filter((name) => selected.includes(name));
-
-  /*
-   * 正解一覧には存在するが、
-   * ユーザーが選択しなかった薬品を取得する。
-   */
 
   const missed = correct.filter((name) => !selected.includes(name));
 
-  /*
-   * ユーザーが選択したが、
-   * 正解一覧には存在しない薬品を取得する。
-   */
-
   const extra = selected.filter((name) => !correct.includes(name));
-
-  /*
-   * 点数計算
-   *
-   * 正解した薬品数
-   * ---------------- × 100
-   * 正解薬品の総数
-   *
-   * 余計な薬品を選択していても、
-   * 正解した薬品数に応じた点数は付与する。
-   */
 
   const score =
     correct.length === 0
       ? 0
       : Math.round((correctSelected.length / correct.length) * 100);
-
-  /*
-   * パーフェクト条件
-   *
-   * ・正解薬品をすべて選択
-   * ・余計な薬品を選択していない
-   */
 
   const isPerfect =
     correct.length > 0 && missed.length === 0 && extra.length === 0;
@@ -341,14 +280,6 @@ export default function MedicationQuiz({ data }: Props) {
    * ==================================================
    * 剤型選択
    * ==================================================
-   *
-   * 初期状態では、
-   *
-   * ・内服
-   * ・注射
-   * ・外用
-   *
-   * のすべてを選択する。
    */
 
   const [selectedDosageForms, setSelectedDosageForms] = useState<DosageForm[]>([
@@ -415,12 +346,6 @@ export default function MedicationQuiz({ data }: Props) {
    * ==================================================
    * 回答済み状態
    * ==================================================
-   *
-   * false
-   *   → 回答入力中
-   *
-   * true
-   *   → 正誤判定済み
    */
 
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
@@ -429,9 +354,6 @@ export default function MedicationQuiz({ data }: Props) {
    * ==================================================
    * localStorage読み込み
    * ==================================================
-   *
-   * ページを再読み込みした場合でも、
-   * 途中まで進めたクイズを復元できるようにする。
    */
 
   useEffect(() => {
@@ -453,19 +375,10 @@ export default function MedicationQuiz({ data }: Props) {
 
       setQuizState(parsed);
 
-      /*
-       * 現在の問題に対する保存済み回答を取得する。
-       */
-
       const currentAnswer = parsed.answers[parsed.currentQuestionIndex];
 
       if (currentAnswer) {
         setSelectedAnswers(currentAnswer.selectedMedications);
-
-        /*
-         * 正解・不正解のいずれかの結果が
-         * 保存されている場合は回答済みとする。
-         */
 
         const hasResult =
           currentAnswer.correctMedications.length > 0 ||
@@ -689,22 +602,12 @@ export default function MedicationQuiz({ data }: Props) {
    * ==================================================
    * 問題生成
    * ==================================================
-   *
-   * まず剤型で対象データを絞り込む。
-   *
-   * その後、
-   *
-   * 大分類
-   * 小分類
-   * 成分
-   *
-   * の選択状態に応じて問題を作成する。
    */
 
   function createQuestions(): QuizQuestion[] {
     /*
      * --------------------------------------------------
-     * 剤型による絞り込み
+     * まず剤型で絞り込む
      * --------------------------------------------------
      */
 
@@ -721,14 +624,16 @@ export default function MedicationQuiz({ data }: Props) {
      *
      * 大分類を1問として扱う。
      *
-     * 小分類が選択されている場合は、
-     * その小分類に属する薬品だけを対象とする。
+     * 大分類が選択されている場合は、
+     * 選択された大分類だけを出題対象とする。
+     *
+     * ここが今回の重要な修正箇所。
      */
 
     if (quizLevel === "large") {
-      if (selectedSmallCategories.length > 0) {
+      if (selectedLargeCategories.length > 0) {
         targetData = targetData.filter((item) =>
-          selectedSmallCategories.includes(getText(item, "小分類")),
+          selectedLargeCategories.includes(getText(item, "大分類")),
         );
       }
 
@@ -755,10 +660,8 @@ export default function MedicationQuiz({ data }: Props) {
 
         questionValue: category,
 
-        dosageForms: uniqueStrings(
-          items
-            .map((item) => getDosageForm(item))
-            .filter((value): value is DosageForm => value !== null),
+        dosageForms: uniqueDosageForms(
+          items.map((item) => getDosageForm(item)),
         ),
 
         correctMedications: uniqueStrings(
@@ -774,14 +677,14 @@ export default function MedicationQuiz({ data }: Props) {
      *
      * 小分類を1問として扱う。
      *
-     * 大分類が選択されている場合は、
-     * その大分類に属する薬品だけを対象とする。
+     * 小分類が選択されている場合は、
+     * 選択された小分類だけを出題対象とする。
      */
 
     if (quizLevel === "small") {
-      if (selectedLargeCategories.length > 0) {
+      if (selectedSmallCategories.length > 0) {
         targetData = targetData.filter((item) =>
-          selectedLargeCategories.includes(getText(item, "大分類")),
+          selectedSmallCategories.includes(getText(item, "小分類")),
         );
       }
 
@@ -808,10 +711,8 @@ export default function MedicationQuiz({ data }: Props) {
 
         questionValue: category,
 
-        dosageForms: uniqueStrings(
-          items
-            .map((item) => getDosageForm(item))
-            .filter((value): value is DosageForm => value !== null),
+        dosageForms: uniqueDosageForms(
+          items.map((item) => getDosageForm(item)),
         ),
 
         correctMedications: uniqueStrings(
@@ -825,14 +726,11 @@ export default function MedicationQuiz({ data }: Props) {
      * 成分レベル
      * --------------------------------------------------
      *
-     * 成分を1問として扱う。
+     * 大分類
+     * 小分類
+     * 成分
      *
-     * 大分類のみ、
-     * 小分類のみ、
-     * 大分類 + 小分類、
-     * 成分のみ、
-     *
-     * の組み合わせに対応する。
+     * の選択条件を組み合わせる。
      */
 
     if (selectedLargeCategories.length > 0) {
@@ -876,11 +774,7 @@ export default function MedicationQuiz({ data }: Props) {
 
       questionValue: ingredient,
 
-      dosageForms: uniqueStrings(
-        items
-          .map((item) => getDosageForm(item))
-          .filter((value): value is DosageForm => value !== null),
-      ),
+      dosageForms: uniqueDosageForms(items.map((item) => getDosageForm(item))),
 
       correctMedications: uniqueStrings(
         items.map(getMedicationName).filter(Boolean),
@@ -895,68 +789,31 @@ export default function MedicationQuiz({ data }: Props) {
    */
 
   function handleStart() {
-    /*
-     * 剤型が1つも選択されていない場合は、
-     * クイズを開始しない。
-     */
-
     if (selectedDosageForms.length === 0) {
       alert("剤型を1つ以上選択してください。");
       return;
     }
 
-    /*
-     * 条件に応じて問題を作成する。
-     */
-
     const questions = createQuestions();
-
-    /*
-     * 問題が1問も作成できない場合は、
-     * クイズを開始しない。
-     */
 
     if (questions.length === 0) {
       alert("条件に該当する問題がありません。");
       return;
     }
 
-    /*
-     * 問題をランダムに並び替える。
-     */
-
     const shuffled = shuffle(questions);
-
-    /*
-     * 指定問題数を上限として問題を切り出す。
-     *
-     * -1の場合は全問出題する。
-     */
 
     const finalQuestions =
       questionCount === -1 ? shuffled : shuffled.slice(0, questionCount);
 
-    /*
-     * 各問題の回答状態を初期化する。
-     */
-
     const answers: QuizAnswer[] = finalQuestions.map(() => ({
       selectedMedications: [],
-
       correctMedications: [],
-
       missedMedications: [],
-
       extraMedications: [],
-
       score: 0,
-
       isPerfect: false,
     }));
-
-    /*
-     * 新しいクイズ状態を作成する。
-     */
 
     const newQuizState: QuizState = {
       questionCount,
@@ -970,10 +827,6 @@ export default function MedicationQuiz({ data }: Props) {
 
     setQuizState(newQuizState);
 
-    /*
-     * 前回の回答入力をクリアする。
-     */
-
     setSelectedAnswers([]);
 
     setAnswerSearch("");
@@ -985,9 +838,6 @@ export default function MedicationQuiz({ data }: Props) {
    * ==================================================
    * 同じ条件で再出題
    * ==================================================
-   *
-   * 現在の出題設定をそのまま利用して、
-   * 新しい問題セットを作成する。
    */
 
   function handleRestartSameConditions() {
@@ -998,9 +848,6 @@ export default function MedicationQuiz({ data }: Props) {
    * ==================================================
    * 出題設定へ戻る
    * ==================================================
-   *
-   * 現在のクイズ状態を破棄して、
-   * 出題設定画面へ戻る。
    */
 
   function handleBackToSettings() {
@@ -1038,41 +885,22 @@ export default function MedicationQuiz({ data }: Props) {
      * ==================================================
      * クイズ終了
      * ==================================================
-     *
-     * 全問題への回答が終了した場合、
-     * 最終結果を表示する。
      */
 
     if (!currentQuestion) {
-      /*
-       * 全問題の点数を合計する。
-       */
-
       const totalScore = quizState.answers.reduce(
         (total, answer) => total + answer.score,
         0,
       );
 
-      /*
-       * パーフェクトだった問題数を取得する。
-       */
-
       const perfectCount = quizState.answers.filter(
         (answer) => answer.isPerfect,
       ).length;
-
-      /*
-       * 平均点を計算する。
-       */
 
       const scoreRate =
         quizState.answers.length === 0
           ? 0
           : Math.round(totalScore / quizState.answers.length);
-
-      /*
-       * パーフェクト率を計算する。
-       */
 
       const perfectRate =
         quizState.answers.length === 0
@@ -1085,10 +913,6 @@ export default function MedicationQuiz({ data }: Props) {
             <h1 className={styles.heading}>💊 医薬品クイズ 結果</h1>
 
             <p>クイズが終了しました。</p>
-
-            {/* =========================
-                総合結果
-            ========================== */}
 
             <div className={styles.resultSummary}>
               <div className={styles.resultSummaryItem}>
@@ -1111,10 +935,6 @@ export default function MedicationQuiz({ data }: Props) {
                 </strong>
               </div>
             </div>
-
-            {/* =========================
-                問題別結果
-            ========================== */}
 
             <div className={styles.resultSection}>
               <h2 className={styles.resultSectionTitle}>問題別結果</h2>
@@ -1155,10 +975,6 @@ export default function MedicationQuiz({ data }: Props) {
               </div>
             </div>
 
-            {/* =========================
-                操作
-            ========================== */}
-
             <div className={styles.quizActions}>
               <button
                 type="button"
@@ -1197,14 +1013,6 @@ export default function MedicationQuiz({ data }: Props) {
 
     const keyword = answerSearch.trim().toLowerCase();
 
-    /*
-     * 現在の問題に設定されている剤型に
-     * 該当する薬品を候補として取得する。
-     *
-     * 検索文字が入力されていない場合は
-     * 候補を表示しない。
-     */
-
     const answerCandidates = uniqueStrings(
       data
         .filter((item) => {
@@ -1225,10 +1033,6 @@ export default function MedicationQuiz({ data }: Props) {
 
         return name.toLowerCase().includes(keyword);
       })
-      /*
-       * すでに選択した薬品は
-       * 候補一覧から除外する。
-       */
       .filter((name) => !selectedAnswers.includes(name))
       .slice(0, 50);
 
@@ -1239,11 +1043,6 @@ export default function MedicationQuiz({ data }: Props) {
      */
 
     function toggleAnswer(medicationName: string) {
-      /*
-       * 回答済みの場合は、
-       * 回答内容を変更できないようにする。
-       */
-
       if (answerSubmitted) {
         return;
       }
@@ -1264,27 +1063,14 @@ export default function MedicationQuiz({ data }: Props) {
      */
 
     function handleAnswer() {
-      /*
-       * すでに回答済みの場合は、
-       * 二重判定を行わない。
-       */
-
       if (answerSubmitted) {
         return;
       }
-
-      /*
-       * 現在の回答を正誤判定する。
-       */
 
       const result = judgeAnswer(
         selectedAnswers,
         currentQuestion.correctMedications,
       );
-
-      /*
-       * 判定結果をクイズ状態へ保存する。
-       */
 
       setQuizState((current) => {
         if (!current) {
@@ -1316,10 +1102,6 @@ export default function MedicationQuiz({ data }: Props) {
         };
       });
 
-      /*
-       * 回答結果表示へ切り替える。
-       */
-
       setAnswerSubmitted(true);
     }
 
@@ -1330,11 +1112,6 @@ export default function MedicationQuiz({ data }: Props) {
      */
 
     function handleNextQuestion() {
-      /*
-       * 回答済みでなければ、
-       * 次の問題へ進めない。
-       */
-
       if (!answerSubmitted) {
         return;
       }
@@ -1350,10 +1127,6 @@ export default function MedicationQuiz({ data }: Props) {
           currentQuestionIndex: current.currentQuestionIndex + 1,
         };
       });
-
-      /*
-       * 次の問題用に回答入力をリセットする。
-       */
 
       setSelectedAnswers([]);
 
@@ -1371,10 +1144,6 @@ export default function MedicationQuiz({ data }: Props) {
     return (
       <main className={styles.container}>
         <div className={styles.card}>
-          {/* =========================
-              問題ヘッダー
-          ========================== */}
-
           <div className={styles.questionHeader}>
             <h1 className={styles.heading}>💊 医薬品クイズ</h1>
 
@@ -1383,10 +1152,6 @@ export default function MedicationQuiz({ data }: Props) {
               {quizState.questions.length}
             </div>
           </div>
-
-          {/* =========================
-              問題
-          ========================== */}
 
           <div className={styles.question}>
             <div className={styles.questionLabel}>
@@ -1403,10 +1168,6 @@ export default function MedicationQuiz({ data }: Props) {
               {currentQuestion.questionValue}
             </div>
           </div>
-
-          {/* ==================================================
-              回答入力画面
-          ================================================== */}
 
           {!answerSubmitted && (
             <div className={styles.answerArea}>
@@ -1440,10 +1201,6 @@ export default function MedicationQuiz({ data }: Props) {
                 )}
               </div>
 
-              {/* =========================
-                  選択中の薬品
-              ========================== */}
-
               {selectedAnswers.length > 0 && (
                 <div className={styles.answerSelectedList}>
                   <h2 className={styles.answerSelectedTitle}>選択中</h2>
@@ -1464,10 +1221,6 @@ export default function MedicationQuiz({ data }: Props) {
                 </div>
               )}
 
-              {/* =========================
-                  回答ボタン
-              ========================== */}
-
               <div className={styles.quizActions}>
                 <button
                   type="button"
@@ -1480,16 +1233,8 @@ export default function MedicationQuiz({ data }: Props) {
             </div>
           )}
 
-          {/* ==================================================
-              回答結果
-          ================================================== */}
-
           {answerSubmitted && (
             <div className={styles.answerResultArea}>
-              {/* =========================
-                  得点・判定
-              ========================== */}
-
               <div className={styles.answerResultHeader}>
                 {currentAnswer.isPerfect ? (
                   <>
@@ -1510,10 +1255,6 @@ export default function MedicationQuiz({ data }: Props) {
                 )}
               </div>
 
-              {/* =========================
-                  正解薬品
-              ========================== */}
-
               <div className={styles.resultSection}>
                 <h2 className={styles.resultSectionTitle}>正解薬品</h2>
 
@@ -1528,10 +1269,6 @@ export default function MedicationQuiz({ data }: Props) {
                   ))}
                 </div>
               </div>
-
-              {/* =========================
-                  追加できなかった薬品
-              ========================== */}
 
               {currentAnswer.missedMedications.length > 0 && (
                 <div className={styles.resultSection}>
@@ -1552,10 +1289,6 @@ export default function MedicationQuiz({ data }: Props) {
                 </div>
               )}
 
-              {/* =========================
-                  余計に選択した薬品
-              ========================== */}
-
               {currentAnswer.extraMedications.length > 0 && (
                 <div className={styles.resultSection}>
                   <h2 className={styles.resultSectionTitle}>
@@ -1574,10 +1307,6 @@ export default function MedicationQuiz({ data }: Props) {
                   </div>
                 </div>
               )}
-
-              {/* =========================
-                  次の問題
-              ========================== */}
 
               <div className={styles.quizActions}>
                 <button
