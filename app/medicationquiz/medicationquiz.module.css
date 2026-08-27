@@ -359,6 +359,48 @@
   cursor: not-allowed;
 }
 
+.secondaryButton {
+  min-height: 44px;
+  padding: 10px 22px;
+  border: 1px solid #cfd4dc;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.secondaryButton:hover {
+  background: #f3f4f6;
+}
+
+.secondaryButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dangerButton {
+  min-height: 44px;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 8px;
+  background: #dc2626;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.dangerButton:hover {
+  background: #b91c1c;
+}
+
+.dangerButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ==================================================
    回答結果
 ================================================== */
@@ -490,6 +532,10 @@
    問題別結果
 ================================================== */
 
+.questionResultList {
+  margin-top: 16px;
+}
+
 .questionResults {
   margin-top: 28px;
 }
@@ -564,6 +610,48 @@
 }
 
 /* ==================================================
+   PDF出力関連
+================================================== */
+
+.pdfActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.pdfSection {
+  margin-top: 28px;
+  padding: 20px;
+  border: 1px solid #dfe3e8;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.pdfSectionTitle {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.pdfDescription {
+  margin: 0 0 16px;
+  color: #666666;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ==================================================
+   中止確認
+================================================== */
+
+.cancelSection {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+/* ==================================================
    レスポンシブ
 ================================================== */
 
@@ -615,11 +703,15 @@
     width: 100%;
   }
 
-  .quizActions {
+  .quizActions,
+  .resultActions,
+  .pdfActions {
     flex-direction: column;
   }
 
-  .primaryButton {
+  .primaryButton,
+  .secondaryButton,
+  .dangerButton {
     width: 100%;
   }
 
@@ -632,7 +724,12 @@
     flex-direction: column;
   }
 
-  .resultSection {
+  .resultSection,
+  .pdfSection {
     padding: 16px;
+  }
+
+  .cancelSection {
+    justify-content: stretch;
   }
 }
