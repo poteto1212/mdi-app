@@ -290,6 +290,374 @@ function getLevelLabel(level: QuizLevel): string {
 
 /*
  * ==================================================
+ * 結果PDF出力
+ * ==================================================
+ *
+ * 略語クイズと同じ方式で、
+ * 別ウィンドウに印刷用ページを作成して印刷する。
+ *
+ * 「PDFとして保存」を選択することでPDF化できる。
+ */
+function printQuizResult(quizState: QuizState) {
+  const printWindow = window.open("", "_blank", "width=900,height=700");
+
+  if (!printWindow) {
+    alert(
+      "PDF出力用のウィンドウを開けませんでした。\nブラウザのポップアップブロックを確認してください。",
+    );
+
+    return;
+  }
+
+  const totalScore = quizState.answers.reduce(
+    (total, answer) => total + answer.score,
+    0,
+  );
+
+  const perfectCount = quizState.answers.filter(
+    (answer) => answer.isPerfect,
+  ).length;
+
+  const scoreRate =
+    quizState.answers.length === 0
+      ? 0
+      : Math.round(totalScore / quizState.answers.length);
+
+  const perfectRate =
+    quizState.answers.length === 0
+      ? 0
+      : Math.round((perfectCount / quizState.answers.length) * 100);
+
+  const rows = quizState.questions
+    .map((question, index) => {
+      const answer = quizState.answers[index];
+
+      const resultText = answer.isPerfect
+        ? "パーフェクト"
+        : answer.score > 0
+          ? `${answer.score}点`
+          : answer.selectedMedications.length === 0
+            ? "未回答"
+            : "不正解";
+
+      const resultClass = answer.isPerfect
+        ? "perfect"
+        : answer.score > 0
+          ? "partial"
+          : answer.selectedMedications.length === 0
+            ? "unanswered"
+            : "incorrect";
+
+      const selectedText =
+        answer.selectedMedications.length > 0
+          ? answer.selectedMedications.join("、")
+          : "未回答";
+
+      const correctText =
+        question.correctMedications.length > 0
+          ? question.correctMedications.join("、")
+          : "―";
+
+      const missedText =
+        answer.missedMedications.length > 0
+          ? answer.missedMedications.join("、")
+          : "―";
+
+      const extraText =
+        answer.extraMedications.length > 0
+          ? answer.extraMedications.join("、")
+          : "―";
+
+      return `
+        <tr>
+          <td class="number">${index + 1}</td>
+          <td>
+            <div class="condition">
+              ${escapeHtml(getLevelLabel(question.level))}：
+              ${escapeHtml(question.questionValue)}
+            </div>
+          </td>
+          <td>${escapeHtml(selectedText)}</td>
+          <td>${escapeHtml(correctText)}</td>
+          <td>${escapeHtml(missedText)}</td>
+          <td>${escapeHtml(extraText)}</td>
+          <td class="${resultClass}">
+            ${escapeHtml(resultText)}
+          </td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="ja">
+      <head>
+        <meta charset="UTF-8" />
+
+        <title>医薬品クイズ 結果</title>
+
+        <style>
+          @page {
+            size: A4 landscape;
+            margin: 8mm;
+          }
+
+          * {
+            box-sizing: border-box;
+          }
+
+          html,
+          body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            font-family:
+              -apple-system,
+              BlinkMacSystemFont,
+              "Noto Sans JP",
+              "Yu Gothic",
+              "Hiragino Kaku Gothic ProN",
+              Meiryo,
+              sans-serif;
+            color: #222;
+            background: #fff;
+          }
+
+          body {
+            font-size: 9px;
+          }
+
+          .page {
+            width: 100%;
+            max-width: 281mm;
+            margin: 0 auto;
+          }
+
+          h1 {
+            margin: 0 0 3mm;
+            text-align: center;
+            font-size: 17px;
+            line-height: 1.3;
+          }
+
+          .summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 3mm;
+            margin-bottom: 4mm;
+          }
+
+          .summary-item {
+            border: 1px solid #999;
+            padding: 2mm;
+            text-align: center;
+          }
+
+          .summary-label {
+            display: block;
+            margin-bottom: 1mm;
+            color: #555;
+            font-size: 8px;
+          }
+
+          .summary-value {
+            display: block;
+            font-size: 13px;
+            font-weight: bold;
+          }
+
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+          }
+
+          th,
+          td {
+            border: 1px solid #777;
+            padding: 1.4mm 1.2mm;
+            vertical-align: middle;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+          }
+
+          th {
+            background: #eeeeee;
+            text-align: center;
+            font-weight: bold;
+          }
+
+          th:nth-child(1) {
+            width: 5%;
+          }
+
+          th:nth-child(2) {
+            width: 17%;
+          }
+
+          th:nth-child(3) {
+            width: 18%;
+          }
+
+          th:nth-child(4) {
+            width: 18%;
+          }
+
+          th:nth-child(5) {
+            width: 15%;
+          }
+
+          th:nth-child(6) {
+            width: 15%;
+          }
+
+          th:nth-child(7) {
+            width: 12%;
+          }
+
+          td.number,
+          td.perfect,
+          td.partial,
+          td.incorrect,
+          td.unanswered {
+            text-align: center;
+          }
+
+          .condition {
+            font-weight: bold;
+          }
+
+          .perfect {
+            color: #008000;
+            font-weight: bold;
+          }
+
+          .partial {
+            color: #b36b00;
+            font-weight: bold;
+          }
+
+          .incorrect {
+            color: #cc0000;
+            font-weight: bold;
+          }
+
+          .unanswered {
+            color: #777;
+            font-weight: bold;
+          }
+
+          .footer {
+            margin-top: 3mm;
+            text-align: right;
+            color: #777;
+            font-size: 7px;
+          }
+
+          @media print {
+            html,
+            body {
+              width: 297mm;
+              min-height: 210mm;
+            }
+
+            .page {
+              width: 281mm;
+              max-width: 281mm;
+            }
+          }
+        </style>
+      </head>
+
+      <body>
+        <div class="page">
+
+          <h1>医薬品クイズ 結果</h1>
+
+          <div class="summary">
+            <div class="summary-item">
+              <span class="summary-label">出題数</span>
+              <span class="summary-value">
+                ${quizState.questions.length}問
+              </span>
+            </div>
+
+            <div class="summary-item">
+              <span class="summary-label">点数率</span>
+              <span class="summary-value">
+                ${scoreRate}%
+              </span>
+            </div>
+
+            <div class="summary-item">
+              <span class="summary-label">パーフェクト率</span>
+              <span class="summary-value">
+                ${perfectRate}%
+              </span>
+            </div>
+
+            <div class="summary-item">
+              <span class="summary-label">パーフェクト</span>
+              <span class="summary-value">
+                ${perfectCount} / ${quizState.answers.length}
+              </span>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>問題</th>
+                <th>出題条件</th>
+                <th>ユーザー回答</th>
+                <th>正解薬品</th>
+                <th>未選択</th>
+                <th>余計に選択</th>
+                <th>結果</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+
+          <div class="footer">
+            医薬品クイズ
+          </div>
+
+        </div>
+      </body>
+    </html>
+  `;
+
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+
+  printWindow.onload = () => {
+    printWindow.focus();
+    printWindow.print();
+  };
+}
+
+/*
+ * ==================================================
+ * HTMLエスケープ
+ * ==================================================
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/*
+ * ==================================================
  * MedicationQuiz
  * ==================================================
  */
@@ -971,7 +1339,11 @@ export default function MedicationQuiz({ data }: Props) {
       return;
     }
 
-    setPrintMode("result");
+    /*
+     * 略語クイズと同じく、
+     * 別ウィンドウを開いて印刷する。
+     */
+    printQuizResult(quizState);
   }
 
   /*
@@ -1044,125 +1416,6 @@ export default function MedicationQuiz({ data }: Props) {
    */
 
   if (printMode !== "none" && quizState !== null) {
-    /*
-     * ----------------------------------------------
-     * 結果PDF
-     * ----------------------------------------------
-     */
-
-    if (printMode === "result") {
-      const totalScore = quizState.answers.reduce(
-        (total, answer) => total + answer.score,
-        0,
-      );
-
-      const perfectCount = quizState.answers.filter(
-        (answer) => answer.isPerfect,
-      ).length;
-
-      const scoreRate =
-        quizState.answers.length === 0
-          ? 0
-          : Math.round(totalScore / quizState.answers.length);
-
-      const perfectRate =
-        quizState.answers.length === 0
-          ? 0
-          : Math.round((perfectCount / quizState.answers.length) * 100);
-
-      return (
-        <main className={styles.printDocument}>
-          <div className={styles.printHeader}>
-            <h1>医薬品クイズ 結果</h1>
-
-            <p>
-              出題数：
-              {quizState.questions.length}問
-            </p>
-          </div>
-
-          <div className={styles.printSummary}>
-            <div>
-              <span>点数率</span>
-              <strong>{scoreRate}%</strong>
-            </div>
-
-            <div>
-              <span>パーフェクト率</span>
-              <strong>{perfectRate}%</strong>
-            </div>
-
-            <div>
-              <span>パーフェクト</span>
-              <strong>
-                {perfectCount} / {quizState.answers.length}
-              </strong>
-            </div>
-          </div>
-
-          <div className={styles.printQuestionList}>
-            {quizState.questions.map((question, index) => {
-              const answer = quizState.answers[index];
-
-              return (
-                <section key={question.id} className={styles.printQuestionCard}>
-                  <div className={styles.printQuestionHeader}>
-                    <strong>問題 {index + 1}</strong>
-
-                    <strong>{answer.score}点</strong>
-                  </div>
-
-                  <div className={styles.printCondition}>
-                    {getLevelLabel(question.level)}：{question.questionValue}
-                  </div>
-
-                  <div className={styles.printResultBlock}>
-                    <strong>正解薬品</strong>
-
-                    <div>
-                      {question.correctMedications.map((name) => (
-                        <span key={name} className={styles.printMedication}>
-                          {name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {answer.missedMedications.length > 0 && (
-                    <div className={styles.printResultBlock}>
-                      <strong>未選択</strong>
-
-                      <div>
-                        {answer.missedMedications.map((name) => (
-                          <span key={name} className={styles.printMedication}>
-                            {name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {answer.extraMedications.length > 0 && (
-                    <div className={styles.printResultBlock}>
-                      <strong>余計に選択</strong>
-
-                      <div>
-                        {answer.extraMedications.map((name) => (
-                          <span key={name} className={styles.printMedication}>
-                            {name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </section>
-              );
-            })}
-          </div>
-        </main>
-      );
-    }
-
     /*
      * ----------------------------------------------
      * 紙形式テスト
