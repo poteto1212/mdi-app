@@ -12,6 +12,7 @@ type MedicationData = {
 export default async function MedicationQuizPage() {
   await requireLogin();
   const data = await getMedications();
+  console.log(data);
   /*
    * =========================
    * クイズ対象データ
@@ -46,6 +47,7 @@ export default async function MedicationQuizPage() {
   const uniqueMap = new Map<string, MedicationData>();
 
   for (const item of quizData) {
+    const medicationName = String(item["薬品名"] ?? "").trim();
     const ingredient = String(item["成分名"] ?? "").trim();
 
     const largeCategory = String(item["大分類"] ?? "").trim();
@@ -54,9 +56,13 @@ export default async function MedicationQuizPage() {
 
     const dosageForm = String(item["剤型"] ?? "").trim();
 
-    const key = [ingredient, largeCategory, smallCategory, dosageForm].join(
-      "|||",
-    );
+    const key = [
+      medicationName,
+      ingredient,
+      largeCategory,
+      smallCategory,
+      dosageForm,
+    ].join("|||");
 
     if (!uniqueMap.has(key)) {
       uniqueMap.set(key, item);
