@@ -12,7 +12,6 @@ type MedicationData = {
 export default async function MedicationQuizPage() {
   await requireLogin();
   const data = await getMedications();
-  console.log(data);
   /*
    * =========================
    * クイズ対象データ
