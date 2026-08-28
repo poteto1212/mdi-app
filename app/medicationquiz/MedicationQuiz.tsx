@@ -37,26 +37,6 @@ type QuizLevel = "large" | "small" | "ingredient";
 
 /*
  * ==================================================
- * 印刷モード
- * ==================================================
- *
- * none
- *   通常画面
- *
- * result
- *   クイズ結果PDF
- *
- * test
- *   紙形式テスト
- *
- * test-answer
- *   紙形式テスト＋解答
- */
-
-type PrintMode = "none" | "result" | "test" | "test-answer";
-
-/*
- * ==================================================
  * クイズ問題
  * ==================================================
  */
@@ -290,14 +270,272 @@ function getLevelLabel(level: QuizLevel): string {
 
 /*
  * ==================================================
+ * 紙形式テストPDF出力
+ * ==================================================
+ */
+
+function printQuizPaper(quizState: QuizState, showAnswers: boolean) {
+  const printWindow = window.open("", "_blank", "width=900,height=700");
+
+  if (!printWindow) {
+    alert(
+      "PDF出力用のウィンドウを開けませんでした。\nブラウザのポップアップブロックを確認してください。",
+    );
+
+    return;
+  }
+
+  const rows = quizState.questions
+    .map((question, index) => {
+      const correctText =
+        question.correctMedications.length > 0
+          ? question.correctMedications.join("、")
+          : "―";
+
+      const answerArea = showAnswers
+        ? `
+            <div class="answer-label">解答</div>
+            <div class="answer-text">
+              ${escapeHtml(correctText)}
+            </div>
+          `
+        : `
+            <div class="answer-label">薬品名</div>
+            <div class="answer-lines">
+              <div></div>
+              <div></div>
+              <div></div>
+            </div>
+          `;
+
+      return `
+        <tr>
+          <td class="number">${index + 1}</td>
+
+          <td>
+            <div class="condition">
+              ${escapeHtml(getLevelLabel(question.level))}：
+              ${escapeHtml(question.questionValue)}
+            </div>
+          </td>
+
+          <td>
+            ${answerArea}
+          </td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="ja">
+      <head>
+        <meta charset="UTF-8" />
+
+        <title>
+          医薬品クイズ ${showAnswers ? "解答" : "テスト"}
+        </title>
+
+        <style>
+          @page {
+            size: A4 portrait;
+            margin: 10mm;
+          }
+
+          * {
+            box-sizing: border-box;
+          }
+
+          html,
+          body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            font-family:
+              -apple-system,
+              BlinkMacSystemFont,
+              "Noto Sans JP",
+              "Yu Gothic",
+              "Hiragino Kaku Gothic ProN",
+              Meiryo,
+              sans-serif;
+            color: #222;
+            background: #fff;
+          }
+
+          body {
+            font-size: 9px;
+          }
+
+          .page {
+            width: 100%;
+            max-width: 281mm;
+            margin: 0 auto;
+          }
+
+          h1 {
+            margin: 0 0 3mm;
+            text-align: center;
+            font-size: 17px;
+            line-height: 1.3;
+          }
+
+          .test-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4mm;
+            font-size: 10px;
+          }
+
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+          }
+
+          th,
+          td {
+            border: 1px solid #777;
+            padding: 2mm;
+            vertical-align: middle;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+          }
+
+          th {
+            background: #eeeeee;
+            text-align: center;
+            font-weight: bold;
+          }
+
+          th:nth-child(1) {
+            width: 7%;
+          }
+
+          th:nth-child(2) {
+            width: 28%;
+          }
+
+          th:nth-child(3) {
+            width: 65%;
+          }
+
+          td.number {
+            text-align: center;
+            font-weight: bold;
+            font-size: 11px;
+          }
+
+          .condition {
+            font-weight: bold;
+            font-size: 10px;
+          }
+
+          .answer-label {
+            margin-bottom: 1mm;
+            font-weight: bold;
+            color: #555;
+          }
+
+          .answer-text {
+            font-size: 10px;
+            line-height: 1.6;
+          }
+
+          .answer-lines {
+            display: flex;
+            flex-direction: column;
+            gap: 4mm;
+            padding: 1mm 0;
+          }
+
+          .answer-lines div {
+            height: 6mm;
+            border-bottom: 1px solid #777;
+          }
+
+          .footer {
+            margin-top: 3mm;
+            text-align: right;
+            color: #777;
+            font-size: 7px;
+          }
+
+          @media print {
+            html,
+            body {
+              width: 210mm;
+              min-height: 297mm;
+            }
+
+            .page {
+              width: 190mm;
+              max-width: 190mm;
+            }
+
+            tr {
+              break-inside: avoid;
+              page-break-inside: avoid;
+            }
+          }
+        </style>
+      </head>
+
+      <body>
+        <div class="page">
+
+          <h1>
+            医薬品クイズ
+            ${showAnswers ? "（解答）" : "（テスト）"}
+          </h1>
+
+          <div class="test-info">
+            <span>氏名： ______________________________</span>
+            <span>日付： ______ / ______ / ______</span>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>問題</th>
+                <th>出題条件</th>
+                <th>
+                  ${showAnswers ? "解答" : "薬品名"}
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+
+          <div class="footer">
+            医薬品クイズ
+          </div>
+
+        </div>
+      </body>
+    </html>
+  `;
+
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+
+  printWindow.onload = () => {
+    printWindow.focus();
+    printWindow.print();
+  };
+}
+
+/*
+ * ==================================================
  * 結果PDF出力
  * ==================================================
- *
- * 略語クイズと同じ方式で、
- * 別ウィンドウに印刷用ページを作成して印刷する。
- *
- * 「PDFとして保存」を選択することでPDF化できる。
  */
+
 function printQuizResult(quizState: QuizState) {
   const printWindow = window.open("", "_blank", "width=900,height=700");
 
@@ -371,16 +609,22 @@ function printQuizResult(quizState: QuizState) {
       return `
         <tr>
           <td class="number">${index + 1}</td>
+
           <td>
             <div class="condition">
               ${escapeHtml(getLevelLabel(question.level))}：
               ${escapeHtml(question.questionValue)}
             </div>
           </td>
+
           <td>${escapeHtml(selectedText)}</td>
+
           <td>${escapeHtml(correctText)}</td>
+
           <td>${escapeHtml(missedText)}</td>
+
           <td>${escapeHtml(extraText)}</td>
+
           <td class="${resultClass}">
             ${escapeHtml(resultText)}
           </td>
@@ -576,8 +820,10 @@ function printQuizResult(quizState: QuizState) {
           <h1>医薬品クイズ 結果</h1>
 
           <div class="summary">
+
             <div class="summary-item">
               <span class="summary-label">出題数</span>
+
               <span class="summary-value">
                 ${quizState.questions.length}問
               </span>
@@ -585,6 +831,7 @@ function printQuizResult(quizState: QuizState) {
 
             <div class="summary-item">
               <span class="summary-label">点数率</span>
+
               <span class="summary-value">
                 ${scoreRate}%
               </span>
@@ -592,6 +839,7 @@ function printQuizResult(quizState: QuizState) {
 
             <div class="summary-item">
               <span class="summary-label">パーフェクト率</span>
+
               <span class="summary-value">
                 ${perfectRate}%
               </span>
@@ -599,13 +847,16 @@ function printQuizResult(quizState: QuizState) {
 
             <div class="summary-item">
               <span class="summary-label">パーフェクト</span>
+
               <span class="summary-value">
                 ${perfectCount} / ${quizState.answers.length}
               </span>
             </div>
+
           </div>
 
           <table>
+
             <thead>
               <tr>
                 <th>問題</th>
@@ -621,6 +872,7 @@ function printQuizResult(quizState: QuizState) {
             <tbody>
               ${rows}
             </tbody>
+
           </table>
 
           <div class="footer">
@@ -647,6 +899,7 @@ function printQuizResult(quizState: QuizState) {
  * HTMLエスケープ
  * ==================================================
  */
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -749,14 +1002,6 @@ export default function MedicationQuiz({ data }: Props) {
 
   /*
    * ==================================================
-   * 印刷状態
-   * ==================================================
-   */
-
-  const [printMode, setPrintMode] = useState<PrintMode>("none");
-
-  /*
-   * ==================================================
    * localStorage読み込み
    * ==================================================
    */
@@ -820,44 +1065,6 @@ export default function MedicationQuiz({ data }: Props) {
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(quizState));
   }, [quizState, storageChecked]);
-
-  /*
-   * ==================================================
-   * 印刷処理
-   * ==================================================
-   */
-
-  useEffect(() => {
-    if (printMode === "none") {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      window.print();
-    }, 100);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [printMode]);
-
-  /*
-   * ==================================================
-   * 印刷終了
-   * ==================================================
-   */
-
-  useEffect(() => {
-    function handleAfterPrint() {
-      setPrintMode("none");
-    }
-
-    window.addEventListener("afterprint", handleAfterPrint);
-
-    return () => {
-      window.removeEventListener("afterprint", handleAfterPrint);
-    };
-  }, []);
 
   /*
    * ==================================================
@@ -1266,8 +1473,6 @@ export default function MedicationQuiz({ data }: Props) {
     setAnswerSearch("");
 
     setAnswerSubmitted(false);
-
-    setPrintMode("none");
   }
 
   /*
@@ -1296,8 +1501,6 @@ export default function MedicationQuiz({ data }: Props) {
     setAnswerSearch("");
 
     setAnswerSubmitted(false);
-
-    setPrintMode("none");
   }
 
   /*
@@ -1324,8 +1527,6 @@ export default function MedicationQuiz({ data }: Props) {
     setAnswerSearch("");
 
     setAnswerSubmitted(false);
-
-    setPrintMode("none");
   }
 
   /*
@@ -1339,16 +1540,14 @@ export default function MedicationQuiz({ data }: Props) {
       return;
     }
 
-    /*
-     * 略語クイズと同じく、
-     * 別ウィンドウを開いて印刷する。
-     */
     printQuizResult(quizState);
   }
 
   /*
    * ==================================================
    * 紙テスト作成
+   *
+   * printQuizPaper()方式
    * ==================================================
    */
 
@@ -1366,37 +1565,42 @@ export default function MedicationQuiz({ data }: Props) {
     }
 
     /*
-     * 紙テスト用に一時的なQuizStateを作成。
+     * --------------------------------------------------
+     * 紙テスト専用の一時QuizState
      *
-     * 実際のクイズを開始するわけではない。
+     * 通常のquizStateには保存しない。
+     * --------------------------------------------------
      */
 
-    const answers: QuizAnswer[] = questions.map((question) => ({
-      selectedMedications: [],
-      correctMedications: question.correctMedications,
-      missedMedications: [],
-      extraMedications: [],
-      score: 0,
-      isPerfect: false,
-    }));
-
-    setQuizState({
+    const paperQuizState: QuizState = {
       questionCount: questions.length,
 
       questions,
 
-      currentQuestionIndex: questions.length,
+      currentQuestionIndex: 0,
 
-      answers,
-    });
+      answers: questions.map((question) => ({
+        selectedMedications: [],
 
-    setSelectedAnswers([]);
+        correctMedications: question.correctMedications,
 
-    setAnswerSearch("");
+        missedMedications: [],
 
-    setAnswerSubmitted(false);
+        extraMedications: [],
 
-    setPrintMode(withAnswers ? "test-answer" : "test");
+        score: 0,
+
+        isPerfect: false,
+      })),
+    };
+
+    /*
+     * --------------------------------------------------
+     * printQuizPaper()を直接実行
+     * --------------------------------------------------
+     */
+
+    printQuizPaper(paperQuizState, withAnswers);
   }
 
   /*
@@ -1407,73 +1611,6 @@ export default function MedicationQuiz({ data }: Props) {
 
   if (!storageChecked) {
     return null;
-  }
-
-  /*
-   * ==================================================
-   * 印刷画面
-   * ==================================================
-   */
-
-  if (printMode !== "none" && quizState !== null) {
-    /*
-     * ----------------------------------------------
-     * 紙形式テスト
-     * ----------------------------------------------
-     */
-
-    const showAnswers = printMode === "test-answer";
-
-    return (
-      <main className={styles.printDocument}>
-        <div className={styles.printHeader}>
-          <h1>
-            医薬品クイズ
-            {showAnswers ? "（解答あり）" : "（解答なし）"}
-          </h1>
-
-          <div className={styles.testInfo}>
-            <span>氏名： ____________________</span>
-
-            <span>日付： ______ / ______ / ______</span>
-          </div>
-        </div>
-
-        <div className={styles.paperQuestionList}>
-          {quizState.questions.map((question, index) => (
-            <section key={question.id} className={styles.paperQuestion}>
-              <div className={styles.paperQuestionTitle}>問題 {index + 1}</div>
-
-              <div className={styles.paperQuestionCondition}>
-                {getLevelLabel(question.level)}：{question.questionValue}
-              </div>
-
-              <div className={styles.paperAnswerArea}>
-                {showAnswers ? (
-                  <>
-                    <div className={styles.paperAnswerLabel}>解答</div>
-
-                    <div className={styles.paperAnswerText}>
-                      {question.correctMedications.join("、")}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className={styles.paperAnswerLabel}>薬品名</div>
-
-                    <div className={styles.paperAnswerLines}>
-                      <div />
-                      <div />
-                      <div />
-                    </div>
-                  </>
-                )}
-              </div>
-            </section>
-          ))}
-        </div>
-      </main>
-    );
   }
 
   /*
@@ -2225,12 +2362,12 @@ export default function MedicationQuiz({ data }: Props) {
           </div>
 
           <p className={styles.settingDescription}>
-            ※指定した問題数を上限として、 条件に該当する問題を出題します。
+            ※指定した問題数を上限として、条件に該当する問題を出題します。
           </p>
         </section>
 
         {/* ==================================================
-            出題開始
+            4. 紙形式テスト
         ================================================== */}
 
         <section className={styles.paperTestSection}>
@@ -2263,6 +2400,10 @@ export default function MedicationQuiz({ data }: Props) {
             </button>
           </div>
         </section>
+
+        {/* ==================================================
+            出題開始
+        ================================================== */}
 
         <button
           type="button"
