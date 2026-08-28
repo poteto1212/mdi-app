@@ -293,69 +293,187 @@ function printQuizPaper(quizState: QuizState) {
 
   /*
    * ==================================================
-   * 1ページ目：解答なし
+   * 1ページあたりの問題数
    * ==================================================
    */
 
-  const testRows = quizState.questions
-    .map((question, index) => {
+  const QUESTIONS_PER_PAGE = 7;
+
+  /*
+   * ==================================================
+   * 問題を7問ずつに分割
+   * ==================================================
+   */
+
+  function chunkQuestions(questions: QuizQuestion[]) {
+    const chunks: QuizQuestion[][] = [];
+
+    for (let i = 0; i < questions.length; i += QUESTIONS_PER_PAGE) {
+      chunks.push(questions.slice(i, i + QUESTIONS_PER_PAGE));
+    }
+
+    return chunks;
+  }
+
+  const questionChunks = chunkQuestions(quizState.questions);
+
+  /*
+   * ==================================================
+   * 解答なしページ生成
+   * ==================================================
+   */
+
+  const testPages = questionChunks
+    .map((questions) => {
+      const testRows = questions
+        .map((question) => {
+          const index = quizState.questions.indexOf(question);
+
+          return `
+            <tr>
+              <td class="number">${index + 1}</td>
+
+              <td>
+                <div class="condition">
+                  ${escapeHtml(getLevelLabel(question.level))}：
+                  ${escapeHtml(question.questionValue)}
+                </div>
+              </td>
+
+              <td>
+                <div class="answer-label">
+                  薬品名
+                </div>
+
+                <div class="answer-lines">
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                </div>
+              </td>
+            </tr>
+          `;
+        })
+        .join("");
+
       return `
-        <tr>
-          <td class="number">${index + 1}</td>
+        <div class="page">
 
-          <td>
-            <div class="condition">
-              ${escapeHtml(getLevelLabel(question.level))}：
-              ${escapeHtml(question.questionValue)}
-            </div>
-          </td>
+          <h1>
+            医薬品クイズ（テスト）
+          </h1>
 
-          <td>
-            <div class="answer-label">薬品名</div>
+          <div class="test-info">
 
-            <div class="answer-lines">
-              <div></div>
-              <div></div>
-              <div></div>
-            </div>
-          </td>
-        </tr>
+            <span>
+              氏名： ______________________________
+            </span>
+
+            <span>
+              日付： ______ / ______ / ______
+            </span>
+
+          </div>
+
+          <table>
+
+            <thead>
+
+              <tr>
+                <th>問題</th>
+                <th>出題条件</th>
+                <th>薬品名</th>
+              </tr>
+
+            </thead>
+
+            <tbody>
+              ${testRows}
+            </tbody>
+
+          </table>
+
+          <div class="footer">
+            医薬品クイズ
+          </div>
+
+        </div>
       `;
     })
     .join("");
 
   /*
    * ==================================================
-   * 2ページ目：解答あり
+   * 解答ありページ生成
    * ==================================================
    */
 
-  const answerRows = quizState.questions
-    .map((question, index) => {
-      const correctText =
-        question.correctMedications.length > 0
-          ? question.correctMedications.join("、")
-          : "―";
+  const answerPages = questionChunks
+    .map((questions) => {
+      const answerRows = questions
+        .map((question) => {
+          const index = quizState.questions.indexOf(question);
+
+          const correctText =
+            question.correctMedications.length > 0
+              ? question.correctMedications.join("、")
+              : "―";
+
+          return `
+            <tr>
+              <td class="number">${index + 1}</td>
+
+              <td>
+                <div class="condition">
+                  ${escapeHtml(getLevelLabel(question.level))}：
+                  ${escapeHtml(question.questionValue)}
+                </div>
+              </td>
+
+              <td>
+                <div class="answer-label">
+                  解答
+                </div>
+
+                <div class="answer-text">
+                  ${escapeHtml(correctText)}
+                </div>
+              </td>
+            </tr>
+          `;
+        })
+        .join("");
 
       return `
-        <tr>
-          <td class="number">${index + 1}</td>
+        <div class="page">
 
-          <td>
-            <div class="condition">
-              ${escapeHtml(getLevelLabel(question.level))}：
-              ${escapeHtml(question.questionValue)}
-            </div>
-          </td>
+          <h1>
+            医薬品クイズ（解答）
+          </h1>
 
-          <td>
-            <div class="answer-label">解答</div>
+          <table>
 
-            <div class="answer-text">
-              ${escapeHtml(correctText)}
-            </div>
-          </td>
-        </tr>
+            <thead>
+
+              <tr>
+                <th>問題</th>
+                <th>出題条件</th>
+                <th>解答</th>
+              </tr>
+
+            </thead>
+
+            <tbody>
+              ${answerRows}
+            </tbody>
+
+          </table>
+
+          <div class="footer">
+            医薬品クイズ（解答）
+          </div>
+
+        </div>
       `;
     })
     .join("");
@@ -413,14 +531,30 @@ function printQuizPaper(quizState: QuizState) {
 
           /*
            * ==================================================
-           * A4縦
+           * A4ページ
            * ==================================================
            */
 
           .page {
             width: 190mm;
             max-width: 190mm;
+            height: 277mm;
+            max-height: 277mm;
+
             margin: 0 auto;
+
+            position: relative;
+          }
+
+          /*
+           * ==================================================
+           * 2ページ目以降は必ず改ページ
+           * ==================================================
+           */
+
+          .page + .page {
+            break-before: page;
+            page-break-before: always;
           }
 
           /*
@@ -431,8 +565,11 @@ function printQuizPaper(quizState: QuizState) {
 
           h1 {
             margin: 0 0 3mm;
+
             text-align: center;
+
             font-size: 17px;
+
             line-height: 1.3;
           }
 
@@ -444,8 +581,11 @@ function printQuizPaper(quizState: QuizState) {
 
           .test-info {
             display: flex;
+
             justify-content: space-between;
+
             margin-bottom: 4mm;
+
             font-size: 10px;
           }
 
@@ -457,24 +597,44 @@ function printQuizPaper(quizState: QuizState) {
 
           table {
             width: 100%;
+
             border-collapse: collapse;
+
             table-layout: fixed;
           }
 
           th,
           td {
             border: 1px solid #777;
+
             padding: 2mm;
+
             vertical-align: middle;
+
             overflow-wrap: anywhere;
+
             word-break: break-word;
           }
 
+          /*
+           * ==================================================
+           * 表タイトル
+           * ==================================================
+           */
+
           th {
             background: #eeeeee;
+
             text-align: center;
+
             font-weight: bold;
           }
+
+          /*
+           * ==================================================
+           * 列幅
+           * ==================================================
+           */
 
           th:nth-child(1) {
             width: 7%;
@@ -488,49 +648,77 @@ function printQuizPaper(quizState: QuizState) {
             width: 65%;
           }
 
+          /*
+           * ==================================================
+           * 問題番号
+           * ==================================================
+           */
+
           td.number {
             text-align: center;
+
             font-weight: bold;
+
             font-size: 11px;
           }
 
+          /*
+           * ==================================================
+           * 出題条件
+           * ==================================================
+           */
+
           .condition {
             font-weight: bold;
+
             font-size: 10px;
           }
 
           /*
            * ==================================================
-           * 解答欄
+           * 解答欄タイトル
            * ==================================================
            */
 
           .answer-label {
             margin-bottom: 1mm;
+
             font-weight: bold;
+
             color: #555;
           }
 
+          /*
+           * ==================================================
+           * 解答文字
+           * ==================================================
+           */
+
           .answer-text {
             font-size: 10px;
+
             line-height: 1.6;
           }
 
           /*
            * ==================================================
-           * 解答なしの記入欄
+           * 記入欄
            * ==================================================
            */
 
           .answer-lines {
             display: flex;
+
             flex-direction: column;
+
             gap: 4mm;
+
             padding: 1mm 0;
           }
 
           .answer-lines div {
             height: 6mm;
+
             border-bottom: 1px solid #777;
           }
 
@@ -541,21 +729,15 @@ function printQuizPaper(quizState: QuizState) {
            */
 
           .footer {
-            margin-top: 3mm;
-            text-align: right;
+            position: absolute;
+
+            bottom: 0;
+
+            right: 0;
+
             color: #777;
+
             font-size: 7px;
-          }
-
-          /*
-           * ==================================================
-           * 改ページ
-           * ==================================================
-           */
-
-          .page-break {
-            break-before: page;
-            page-break-before: always;
           }
 
           /*
@@ -569,18 +751,26 @@ function printQuizPaper(quizState: QuizState) {
             html,
             body {
               width: 210mm;
+
               min-height: 297mm;
             }
 
             .page {
               width: 190mm;
+
               max-width: 190mm;
+
+              height: 277mm;
+
+              max-height: 277mm;
             }
 
             tr {
               break-inside: avoid;
+
               page-break-inside: avoid;
             }
+
           }
 
         </style>
@@ -590,111 +780,39 @@ function printQuizPaper(quizState: QuizState) {
       <body>
 
         <!-- ==================================================
-             1ページ目：解答なし
+             解答なし
         ================================================== -->
 
-        <div class="page">
-
-          <h1>
-            医薬品クイズ（テスト）
-          </h1>
-
-          <div class="test-info">
-
-            <span>
-              氏名： ______________________________
-            </span>
-
-            <span>
-              日付： ______ / ______ / ______
-            </span>
-
-          </div>
-
-          <table>
-
-            <thead>
-
-              <tr>
-
-                <th>問題</th>
-
-                <th>出題条件</th>
-
-                <th>薬品名</th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-              ${testRows}
-            </tbody>
-
-          </table>
-
-          <div class="footer">
-            医薬品クイズ
-          </div>
-
-        </div>
-
+        ${testPages}
 
         <!-- ==================================================
-             改ページ
+             解答あり
         ================================================== -->
 
-        <div class="page-break"></div>
-
-
-        <!-- ==================================================
-             2ページ目：解答
-        ================================================== -->
-
-        <div class="page">
-
-          <h1>
-            医薬品クイズ（解答）
-          </h1>
-
-          <table>
-
-            <thead>
-
-              <tr>
-
-                <th>問題</th>
-
-                <th>出題条件</th>
-
-                <th>解答</th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-              ${answerRows}
-            </tbody>
-
-          </table>
-
-          <div class="footer">
-            医薬品クイズ（解答）
-          </div>
-
-        </div>
+        ${answerPages}
 
       </body>
 
     </html>
   `;
 
+  /*
+   * ==================================================
+   * 印刷ウィンドウへHTMLを書き込み
+   * ==================================================
+   */
+
   printWindow.document.open();
 
   printWindow.document.write(html);
 
   printWindow.document.close();
+
+  /*
+   * ==================================================
+   * 印刷
+   * ==================================================
+   */
 
   printWindow.onload = () => {
     printWindow.focus();
