@@ -2,6 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import styles from "./abbreviationquiz.module.css";
+import {
+  printAbbreviationQuizPaper,
+  printAbbreviationQuizResult,
+} from "@/lib/pdf/abbreviationQuizPdf";
 
 type Abbreviation = {
   [key: string]: string | number | null | undefined;
@@ -238,305 +242,6 @@ function isValidQuizState(value: unknown): value is QuizState {
  * A4縦・20問程度を1ページに収める。
  */
 
-function printQuizResult(
-  quizState: QuizState,
-  correctCount: number,
-  incorrectCount: number,
-  unansweredCount: number,
-) {
-  const printWindow = window.open("", "_blank", "width=900,height=700");
-
-  if (!printWindow) {
-    alert(
-      "PDF出力用のウィンドウを開けませんでした。\nブラウザのポップアップブロックを確認してください。",
-    );
-
-    return;
-  }
-
-  /*
-   * ==================================================
-   * 表のHTML
-   * ==================================================
-   */
-
-  const rows = quizState.questions
-    .map((question, index) => {
-      const answer = quizState.answers[index];
-
-      const resultText =
-        answer?.isCorrect === true
-          ? "正解"
-          : answer?.isCorrect === false
-            ? "不正解"
-            : "未回答";
-
-      const resultClass =
-        answer?.isCorrect === true
-          ? "correct"
-          : answer?.isCorrect === false
-            ? "incorrect"
-            : "unanswered";
-
-      return `
-        <tr>
-          <td>${escapeHtml(question.abbreviation)}</td>
-          <td>${escapeHtml(question.japaneseName)}</td>
-          <td>${escapeHtml(answer?.selectedValue ?? "未回答")}</td>
-          <td class="${resultClass}">
-            ${resultText}
-          </td>
-        </tr>
-      `;
-    })
-    .join("");
-
-  /*
-   * ==================================================
-   * PDF用HTML
-   * ==================================================
-   */
-
-  const html = `
-    <!DOCTYPE html>
-    <html lang="ja">
-      <head>
-        <meta charset="UTF-8" />
-
-        <title>略語クイズ結果</title>
-
-        <style>
-          @page {
-            size: A4 portrait;
-            margin: 10mm;
-          }
-
-          * {
-            box-sizing: border-box;
-          }
-
-          html,
-          body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            font-family:
-              -apple-system,
-              BlinkMacSystemFont,
-              "Noto Sans JP",
-              "Yu Gothic",
-              "Hiragino Kaku Gothic ProN",
-              Meiryo,
-              sans-serif;
-            color: #222;
-            background: #fff;
-          }
-
-          body {
-            font-size: 10px;
-          }
-
-          .page {
-            width: 100%;
-            max-width: 190mm;
-            margin: 0 auto;
-          }
-
-          h1 {
-            margin: 0 0 5mm;
-            text-align: center;
-            font-size: 18px;
-            line-height: 1.3;
-          }
-
-          .summary {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 3mm;
-            margin-bottom: 5mm;
-          }
-
-          .summary-item {
-            border: 1px solid #999;
-            padding: 2.5mm 2mm;
-            text-align: center;
-          }
-
-          .summary-label {
-            display: block;
-            font-size: 8px;
-            margin-bottom: 1mm;
-            color: #555;
-          }
-
-          .summary-value {
-            display: block;
-            font-size: 13px;
-            font-weight: bold;
-          }
-
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-          }
-
-          th,
-          td {
-            border: 1px solid #777;
-            padding: 1.8mm 1.5mm;
-            vertical-align: middle;
-            overflow-wrap: anywhere;
-            word-break: break-word;
-          }
-
-          th {
-            background: #eeeeee;
-            text-align: center;
-            font-weight: bold;
-          }
-
-          th:nth-child(1) {
-            width: 22%;
-          }
-
-          th:nth-child(2) {
-            width: 34%;
-          }
-
-          th:nth-child(3) {
-            width: 29%;
-          }
-
-          th:nth-child(4) {
-            width: 15%;
-          }
-
-          td:nth-child(1),
-          td:nth-child(4) {
-            text-align: center;
-          }
-
-          .correct {
-            color: #008000;
-            font-weight: bold;
-          }
-
-          .incorrect {
-            color: #cc0000;
-            font-weight: bold;
-          }
-
-          .unanswered {
-            color: #777;
-            font-weight: bold;
-          }
-
-          .footer {
-            margin-top: 4mm;
-            text-align: right;
-            font-size: 7px;
-            color: #777;
-          }
-
-          @media print {
-            html,
-            body {
-              width: 210mm;
-              min-height: 297mm;
-            }
-
-            .page {
-              width: 190mm;
-              max-width: 190mm;
-            }
-          }
-        </style>
-      </head>
-
-      <body>
-        <div class="page">
-
-          <h1>略語クイズ 結果</h1>
-
-          <div class="summary">
-            <div class="summary-item">
-              <span class="summary-label">問題数</span>
-              <span class="summary-value">
-                ${quizState.questions.length}
-              </span>
-            </div>
-
-            <div class="summary-item">
-              <span class="summary-label">正解数</span>
-              <span class="summary-value">
-                ${correctCount}
-              </span>
-            </div>
-
-            <div class="summary-item">
-              <span class="summary-label">不正解数</span>
-              <span class="summary-value">
-                ${incorrectCount}
-              </span>
-            </div>
-
-            <div class="summary-item">
-              <span class="summary-label">未回答数</span>
-              <span class="summary-value">
-                ${unansweredCount}
-              </span>
-            </div>
-          </div>
-
-          <table>
-            <thead>
-              <tr>
-                <th>略語</th>
-                <th>日本語</th>
-                <th>ユーザー回答</th>
-                <th>正誤</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              ${rows}
-            </tbody>
-          </table>
-
-          <div class="footer">
-            略語クイズ
-          </div>
-
-        </div>
-      </body>
-    </html>
-  `;
-
-  /*
-   * ==================================================
-   * 印刷ウィンドウへ書き込み
-   * ==================================================
-   */
-
-  printWindow.document.open();
-  printWindow.document.write(html);
-  printWindow.document.close();
-
-  /*
-   * ==================================================
-   * 印刷
-   * ==================================================
-   *
-   * DOM描画後に印刷ダイアログを開く。
-   */
-
-  printWindow.onload = () => {
-    printWindow.focus();
-    printWindow.print();
-  };
-}
-
 /*
  * ==================================================
  * HTMLエスケープ
@@ -545,15 +250,6 @@ function printQuizResult(
  * スプレッドシートの値を
  * PDF用HTMLへ安全に埋め込む。
  */
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
 
 /*
  * ==================================================
@@ -728,20 +424,36 @@ export default function AbbreviationQuiz({ data }: Props) {
    * ==================================================
    */
 
-  function handleStart() {
+  /*
+   * ==================================================
+   * クイズ問題作成
+   * ==================================================
+   *
+   * 現在の出題設定から問題を作成する。
+   *
+   * ・通常クイズ
+   * ・出題PDF
+   *
+   * の両方から利用する。
+   */
+
+  function createQuizQuestions(): QuizQuestion[] | null {
     /*
+     * ==================================================
      * 領域別なのに未選択
+     * ==================================================
      */
 
     if (categoryMode === "category" && selectedCategories.length === 0) {
       alert("領域を1つ以上選択してください");
-      return;
+
+      return null;
     }
 
     /*
-     * =========================
+     * ==================================================
      * 出題対象
-     * =========================
+     * ==================================================
      */
 
     let targetData = data;
@@ -760,45 +472,50 @@ export default function AbbreviationQuiz({ data }: Props) {
       });
     }
 
+    /*
+     * 法規制度
+     */
+
     if (categoryMode === "law") {
       targetData = data.filter((item) => {
         return String(item["カテゴリ"] ?? "").trim() === "法規制度";
       });
     }
+
     /*
-     * =========================
+     * ==================================================
      * クイズ問題へ変換
-     * =========================
+     * ==================================================
      */
 
     const targetQuestions = targetData.map(convertToQuestion);
 
     /*
-     * =========================
+     * ==================================================
      * ランダム抽選
-     * =========================
-     *
-     * この時点で一度だけ抽選。
-     *
-     * 以後はlocalStorageに保存された
-     * 問題セットをそのまま使用する。
+     * ==================================================
      */
 
     const shuffled = shuffle(targetQuestions);
 
     /*
-     * =========================
+     * ==================================================
      * 問題数決定
-     * =========================
-     *
-     * -1 = 全問
-     *
-     * 問題数が足りない場合は
-     * 現在ある問題をすべて使用する。
+     * ==================================================
      */
 
     const finalQuestions =
       questionCount === -1 ? shuffled : shuffled.slice(0, questionCount);
+
+    return finalQuestions;
+  }
+
+  function handleStart() {
+    const finalQuestions = createQuizQuestions();
+
+    if (!finalQuestions) {
+      return;
+    }
 
     /*
      * =========================
@@ -834,7 +551,7 @@ export default function AbbreviationQuiz({ data }: Props) {
     };
 
     /*
-     * 回答検索欄もリセット
+     * 回答検索欄リセット
      */
 
     setAnswerSearch("");
@@ -846,6 +563,34 @@ export default function AbbreviationQuiz({ data }: Props) {
     setQuizState(newQuizState);
   }
 
+  function handlePrintPaper() {
+    const finalQuestions = createQuizQuestions();
+
+    if (!finalQuestions) {
+      return;
+    }
+
+    const paperQuizState: QuizState = {
+      questionCount,
+
+      answerMode,
+
+      categoryMode,
+
+      selectedCategories: [...selectedCategories],
+
+      questions: finalQuestions,
+
+      currentQuestionIndex: 0,
+
+      answers: finalQuestions.map(() => ({
+        selectedValue: null,
+        isCorrect: null,
+      })),
+    };
+
+    printAbbreviationQuizPaper(paperQuizState);
+  }
   /*
    * ==================================================
    * 現在の問題の回答候補
@@ -1050,7 +795,7 @@ export default function AbbreviationQuiz({ data }: Props) {
                 type="button"
                 className={styles.primaryButton}
                 onClick={() =>
-                  printQuizResult(
+                  printAbbreviationQuizResult(
                     quizState,
                     correctCount,
                     incorrectCount,
@@ -1058,7 +803,7 @@ export default function AbbreviationQuiz({ data }: Props) {
                   )
                 }
               >
-                PDF出力
+                結果PDF
               </button>
 
               {/* =========================
@@ -1656,7 +1401,13 @@ export default function AbbreviationQuiz({ data }: Props) {
         {/* =========================
             出題開始
         ========================== */}
-
+        <button
+          type="button"
+          className={styles.secondaryButton}
+          onClick={handlePrintPaper}
+        >
+          出題PDF
+        </button>
         <button
           type="button"
           className={styles.primaryButton}
