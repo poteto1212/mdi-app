@@ -2,6 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import styles from "./abbreviationquiz.module.css";
+import {
+  printAbbreviationQuizPaper,
+  printAbbreviationQuizResult,
+} from "@/lib/pdf/abbreviationQuizPdf";
+
+/*
+
+==================================================
+データ型
+==================================================
+*/
 
 type Abbreviation = {
   [key: string]: string | number | null | undefined;
@@ -11,11 +22,25 @@ type Props = {
   data: Abbreviation[];
 };
 
+/*
+
+==================================================
+出題問題数
+==================================================
+*/
+
 const QUESTION_COUNTS = [
   { value: 5, label: "5問" },
   { value: 10, label: "10問" },
   { value: -1, label: "全問" },
 ];
+
+/*
+
+==================================================
+回答形式
+==================================================
+*/
 
 const ANSWER_MODES = [
   {
@@ -30,55 +55,73 @@ const ANSWER_MODES = [
 
 type AnswerMode = (typeof ANSWER_MODES)[number]["value"];
 
+/*
+
+==================================================
+出題カテゴリ
+==================================================
+*/
+
 type CategoryMode = "all" | "category" | "law";
 
 /*
- * ==================================================
- * クイズ問題
- * ==================================================
- */
+
+==================================================
+クイズ問題
+==================================================
+*/
 
 type QuizQuestion = {
   rowNumber: number | null;
+
   abbreviation: string;
+
   japaneseName: string;
+
   category: string;
+
   area: string;
 };
 
 /*
- * ==================================================
- * クイズ回答
- * ==================================================
- */
+
+==================================================
+クイズ回答
+==================================================
+*/
 
 type QuizAnswer = {
   /*
-   * 実際に候補から選択された値
-   *
-   * 未回答
-   * → null
-   */
+
+ユーザーが実際に選択した回答
+
+
+未回答
+→ null
+*/
   selectedValue: string | null;
 
   /*
-   * 正誤
-   *
-   * 未回答
-   * → null
-   * 正解
-   * → true
-   * 不正解
-   * → false
-   */
+
+正誤判定
+
+
+未回答
+→ null
+正解
+→ true
+不正解
+→ false
+*/
   isCorrect: boolean | null;
 };
 
 /*
- * ==================================================
- * localStorageに保存するクイズ状態
- * ==================================================
- */
+
+==================================================
+クイズ状態
+==================================================
+*/
 
 type QuizState = {
   questionCount: number;
@@ -97,22 +140,25 @@ type QuizState = {
 };
 
 /*
- * ==================================================
- * localStorage
- * ==================================================
- */
+
+==================================================
+localStorage
+==================================================
+*/
 
 const STORAGE_KEY = "abbreviationQuizState";
 
 /*
- * ==================================================
- * 表記補正
- * ==================================================
- *
- * ・ひらがな / カタカナを同一視
- * ・大文字 / 小文字を無視
- * ・前後空白を除去
- */
+
+==================================================
+表記補正
+==================================================
+
+
+・前後空白を除去
+・大文字 / 小文字を無視
+・ひらがな / カタカナを同一視
+*/
 
 function normalize(value: unknown): string {
   return String(value ?? "")
@@ -124,10 +170,69 @@ function normalize(value: unknown): string {
 }
 
 /*
- * ==================================================
- * 元データ → クイズ問題
- * ==================================================
- */
+
+==================================================
+正答取得
+==================================================
+
+
+回答形式によって
+正しい答えを取得する。
+*/
+
+function getCorrectAnswer(
+  question: QuizQuestion,
+  answerMode: AnswerMode,
+): string {
+  if (answerMode === "abbreviation-to-japanese") {
+    return question.japaneseName;
+  }
+
+  return question.abbreviation;
+}
+
+/*
+
+==================================================
+正誤判定
+==================================================
+*/
+
+function judgeAnswer(
+  selectedValue: string | null,
+  question: QuizQuestion,
+  answerMode: AnswerMode,
+): boolean | null {
+  /*
+
+回答がない場合
+*/
+
+  if (!selectedValue) {
+    return null;
+  }
+
+  /*
+
+正答取得
+*/
+
+  const correctAnswer = getCorrectAnswer(question, answerMode);
+
+  /*
+
+表記を補正して比較
+*/
+
+  return normalize(selectedValue) === normalize(correctAnswer);
+}
+
+/*
+
+==================================================
+元データ → クイズ問題
+==================================================
+*/
 
 function convertToQuestion(item: Abbreviation): QuizQuestion {
   const rawRowNumber = item["rowNumber"];
@@ -153,10 +258,11 @@ function convertToQuestion(item: Abbreviation): QuizQuestion {
 }
 
 /*
- * ==================================================
- * Fisher-Yatesシャッフル
- * ==================================================
- */
+
+==================================================
+Fisher-Yatesシャッフル
+==================================================
+*/
 
 function shuffle<T>(items: T[]): T[] {
   const result = [...items];
@@ -171,10 +277,11 @@ function shuffle<T>(items: T[]): T[] {
 }
 
 /*
- * ==================================================
- * クイズ状態の検証
- * ==================================================
- */
+
+==================================================
+QuizState検証
+==================================================
+*/
 
 function isValidQuizState(value: unknown): value is QuizState {
   if (!value || typeof value !== "object") {
@@ -183,12 +290,22 @@ function isValidQuizState(value: unknown): value is QuizState {
 
   const state = value as Partial<QuizState>;
 
+  /*
+
+回答形式
+*/
+
   if (
     state.answerMode !== "abbreviation-to-japanese" &&
     state.answerMode !== "japanese-to-abbreviation"
   ) {
     return false;
   }
+
+  /*
+
+カテゴリモード
+*/
 
   if (
     state.categoryMode !== "all" &&
@@ -198,13 +315,28 @@ function isValidQuizState(value: unknown): value is QuizState {
     return false;
   }
 
+  /*
+
+選択カテゴリ
+*/
+
   if (!Array.isArray(state.selectedCategories)) {
     return false;
   }
 
+  /*
+
+問題
+*/
+
   if (!Array.isArray(state.questions)) {
     return false;
   }
+
+  /*
+
+現在の問題番号
+*/
 
   if (
     typeof state.currentQuestionIndex !== "number" ||
@@ -212,6 +344,11 @@ function isValidQuizState(value: unknown): value is QuizState {
   ) {
     return false;
   }
+
+  /*
+
+回答
+*/
 
   if (!Array.isArray(state.answers)) {
     return false;
@@ -221,352 +358,45 @@ function isValidQuizState(value: unknown): value is QuizState {
     return false;
   }
 
+  /*
+
+各回答の形式も確認
+*/
+
+  for (const answer of state.answers) {
+    if (!answer || typeof answer !== "object") {
+      return false;
+    }
+
+    if (
+      answer.selectedValue !== null &&
+      typeof answer.selectedValue !== "string"
+    ) {
+      return false;
+    }
+
+    if (answer.isCorrect !== null && typeof answer.isCorrect !== "boolean") {
+      return false;
+    }
+  }
+
   return true;
 }
 
 /*
- * ==================================================
- * PDF出力
- * ==================================================
- *
- * ブラウザの印刷機能を利用する。
- *
- * 印刷画面で
- * 「PDFとして保存」
- * を選択することでPDF化できる。
- *
- * A4縦・20問程度を1ページに収める。
- */
 
-function printQuizResult(
-  quizState: QuizState,
-  correctCount: number,
-  incorrectCount: number,
-  unansweredCount: number,
-) {
-  const printWindow = window.open("", "_blank", "width=900,height=700");
-
-  if (!printWindow) {
-    alert(
-      "PDF出力用のウィンドウを開けませんでした。\nブラウザのポップアップブロックを確認してください。",
-    );
-
-    return;
-  }
-
-  /*
-   * ==================================================
-   * 表のHTML
-   * ==================================================
-   */
-
-  const rows = quizState.questions
-    .map((question, index) => {
-      const answer = quizState.answers[index];
-
-      const resultText =
-        answer?.isCorrect === true
-          ? "正解"
-          : answer?.isCorrect === false
-            ? "不正解"
-            : "未回答";
-
-      const resultClass =
-        answer?.isCorrect === true
-          ? "correct"
-          : answer?.isCorrect === false
-            ? "incorrect"
-            : "unanswered";
-
-      return `
-        <tr>
-          <td>${escapeHtml(question.abbreviation)}</td>
-          <td>${escapeHtml(question.japaneseName)}</td>
-          <td>${escapeHtml(answer?.selectedValue ?? "未回答")}</td>
-          <td class="${resultClass}">
-            ${resultText}
-          </td>
-        </tr>
-      `;
-    })
-    .join("");
-
-  /*
-   * ==================================================
-   * PDF用HTML
-   * ==================================================
-   */
-
-  const html = `
-    <!DOCTYPE html>
-    <html lang="ja">
-      <head>
-        <meta charset="UTF-8" />
-
-        <title>略語クイズ結果</title>
-
-        <style>
-          @page {
-            size: A4 portrait;
-            margin: 10mm;
-          }
-
-          * {
-            box-sizing: border-box;
-          }
-
-          html,
-          body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            font-family:
-              -apple-system,
-              BlinkMacSystemFont,
-              "Noto Sans JP",
-              "Yu Gothic",
-              "Hiragino Kaku Gothic ProN",
-              Meiryo,
-              sans-serif;
-            color: #222;
-            background: #fff;
-          }
-
-          body {
-            font-size: 10px;
-          }
-
-          .page {
-            width: 100%;
-            max-width: 190mm;
-            margin: 0 auto;
-          }
-
-          h1 {
-            margin: 0 0 5mm;
-            text-align: center;
-            font-size: 18px;
-            line-height: 1.3;
-          }
-
-          .summary {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 3mm;
-            margin-bottom: 5mm;
-          }
-
-          .summary-item {
-            border: 1px solid #999;
-            padding: 2.5mm 2mm;
-            text-align: center;
-          }
-
-          .summary-label {
-            display: block;
-            font-size: 8px;
-            margin-bottom: 1mm;
-            color: #555;
-          }
-
-          .summary-value {
-            display: block;
-            font-size: 13px;
-            font-weight: bold;
-          }
-
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-          }
-
-          th,
-          td {
-            border: 1px solid #777;
-            padding: 1.8mm 1.5mm;
-            vertical-align: middle;
-            overflow-wrap: anywhere;
-            word-break: break-word;
-          }
-
-          th {
-            background: #eeeeee;
-            text-align: center;
-            font-weight: bold;
-          }
-
-          th:nth-child(1) {
-            width: 22%;
-          }
-
-          th:nth-child(2) {
-            width: 34%;
-          }
-
-          th:nth-child(3) {
-            width: 29%;
-          }
-
-          th:nth-child(4) {
-            width: 15%;
-          }
-
-          td:nth-child(1),
-          td:nth-child(4) {
-            text-align: center;
-          }
-
-          .correct {
-            color: #008000;
-            font-weight: bold;
-          }
-
-          .incorrect {
-            color: #cc0000;
-            font-weight: bold;
-          }
-
-          .unanswered {
-            color: #777;
-            font-weight: bold;
-          }
-
-          .footer {
-            margin-top: 4mm;
-            text-align: right;
-            font-size: 7px;
-            color: #777;
-          }
-
-          @media print {
-            html,
-            body {
-              width: 210mm;
-              min-height: 297mm;
-            }
-
-            .page {
-              width: 190mm;
-              max-width: 190mm;
-            }
-          }
-        </style>
-      </head>
-
-      <body>
-        <div class="page">
-
-          <h1>略語クイズ 結果</h1>
-
-          <div class="summary">
-            <div class="summary-item">
-              <span class="summary-label">問題数</span>
-              <span class="summary-value">
-                ${quizState.questions.length}
-              </span>
-            </div>
-
-            <div class="summary-item">
-              <span class="summary-label">正解数</span>
-              <span class="summary-value">
-                ${correctCount}
-              </span>
-            </div>
-
-            <div class="summary-item">
-              <span class="summary-label">不正解数</span>
-              <span class="summary-value">
-                ${incorrectCount}
-              </span>
-            </div>
-
-            <div class="summary-item">
-              <span class="summary-label">未回答数</span>
-              <span class="summary-value">
-                ${unansweredCount}
-              </span>
-            </div>
-          </div>
-
-          <table>
-            <thead>
-              <tr>
-                <th>略語</th>
-                <th>日本語</th>
-                <th>ユーザー回答</th>
-                <th>正誤</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              ${rows}
-            </tbody>
-          </table>
-
-          <div class="footer">
-            略語クイズ
-          </div>
-
-        </div>
-      </body>
-    </html>
-  `;
-
-  /*
-   * ==================================================
-   * 印刷ウィンドウへ書き込み
-   * ==================================================
-   */
-
-  printWindow.document.open();
-  printWindow.document.write(html);
-  printWindow.document.close();
-
-  /*
-   * ==================================================
-   * 印刷
-   * ==================================================
-   *
-   * DOM描画後に印刷ダイアログを開く。
-   */
-
-  printWindow.onload = () => {
-    printWindow.focus();
-    printWindow.print();
-  };
-}
-
-/*
- * ==================================================
- * HTMLエスケープ
- * ==================================================
- *
- * スプレッドシートの値を
- * PDF用HTMLへ安全に埋め込む。
- */
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-/*
- * ==================================================
- * コンポーネント
- * ==================================================
- */
+==================================================
+コンポーネント
+==================================================
+*/
 
 export default function AbbreviationQuiz({ data }: Props) {
   /*
-   * =========================
-   * 出題設定
-   * =========================
-   */
+
+==================================================
+出題設定
+==================================================
+*/
 
   const [questionCount, setQuestionCount] = useState(5);
 
@@ -581,34 +411,38 @@ export default function AbbreviationQuiz({ data }: Props) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   /*
-   * =========================
-   * クイズ状態
-   * =========================
-   */
+
+==================================================
+クイズ状態
+==================================================
+*/
 
   const [quizState, setQuizState] = useState<QuizState | null>(null);
 
   /*
-   * =========================
-   * 回答候補検索文字列
-   * =========================
-   */
+
+==================================================
+回答検索
+==================================================
+*/
 
   const [answerSearch, setAnswerSearch] = useState("");
 
   /*
-   * =========================
-   * localStorage確認完了
-   * =========================
-   */
+
+==================================================
+localStorage確認
+==================================================
+*/
 
   const [storageChecked, setStorageChecked] = useState(false);
 
   /*
-   * ==================================================
-   * 初回読み込み
-   * ==================================================
-   */
+
+==================================================
+初回読み込み
+==================================================
+*/
 
   useEffect(() => {
     try {
@@ -616,6 +450,7 @@ export default function AbbreviationQuiz({ data }: Props) {
 
       if (!saved) {
         setStorageChecked(true);
+
         return;
       }
 
@@ -623,6 +458,17 @@ export default function AbbreviationQuiz({ data }: Props) {
 
       if (isValidQuizState(parsed)) {
         setQuizState(parsed);
+
+        /*
+         * 復元時、
+         * 現在の回答があれば検索欄にも表示する。
+         */
+
+        const currentAnswer = parsed.answers[parsed.currentQuestionIndex];
+
+        if (currentAnswer?.selectedValue) {
+          setAnswerSearch(currentAnswer.selectedValue);
+        }
       } else {
         localStorage.removeItem(STORAGE_KEY);
       }
@@ -634,10 +480,11 @@ export default function AbbreviationQuiz({ data }: Props) {
   }, []);
 
   /*
-   * ==================================================
-   * クイズ状態保存
-   * ==================================================
-   */
+
+==================================================
+クイズ状態保存
+==================================================
+*/
 
   useEffect(() => {
     if (!storageChecked) {
@@ -646,6 +493,7 @@ export default function AbbreviationQuiz({ data }: Props) {
 
     if (quizState === null) {
       localStorage.removeItem(STORAGE_KEY);
+
       return;
     }
 
@@ -653,10 +501,11 @@ export default function AbbreviationQuiz({ data }: Props) {
   }, [quizState, storageChecked]);
 
   /*
-   * ==================================================
-   * 領域一覧
-   * ==================================================
-   */
+
+==================================================
+病態領域一覧
+==================================================
+*/
 
   const categories = useMemo(() => {
     return Array.from(
@@ -669,10 +518,11 @@ export default function AbbreviationQuiz({ data }: Props) {
   }, [data]);
 
   /*
-   * ==================================================
-   * 領域候補
-   * ==================================================
-   */
+
+==================================================
+病態領域候補
+==================================================
+*/
 
   const filteredCategories = useMemo(() => {
     const input = categorySearch.trim().toLowerCase();
@@ -687,18 +537,18 @@ export default function AbbreviationQuiz({ data }: Props) {
   }, [categories, categorySearch]);
 
   /*
-   * ==================================================
-   * カテゴリ切り替え
-   * ==================================================
-   */
+
+==================================================
+カテゴリ切り替え
+==================================================
+*/
 
   function changeCategoryMode(mode: CategoryMode) {
     setCategoryMode(mode);
 
     /*
-     * 全部 ↔ 領域別
-     *
-     * 切り替えるたびに領域選択をリセット
+     * モード変更時は
+     * 領域選択をリセットする。
      */
 
     setSelectedCategories([]);
@@ -707,10 +557,11 @@ export default function AbbreviationQuiz({ data }: Props) {
   }
 
   /*
-   * ==================================================
-   * 領域選択
-   * ==================================================
-   */
+
+==================================================
+領域選択
+==================================================
+*/
 
   function toggleCategory(category: string) {
     setSelectedCategories((current) => {
@@ -723,33 +574,37 @@ export default function AbbreviationQuiz({ data }: Props) {
   }
 
   /*
-   * ==================================================
-   * 出題開始
-   * ==================================================
-   */
 
-  function handleStart() {
+==================================================
+クイズ問題作成
+==================================================
+*/
+
+  function createQuizQuestions(): QuizQuestion[] | null {
     /*
-     * 領域別なのに未選択
+     * ==================================================
+     * 病態領域別なのに未選択
+     * ==================================================
      */
 
     if (categoryMode === "category" && selectedCategories.length === 0) {
       alert("領域を1つ以上選択してください");
-      return;
+
+      return null;
     }
 
     /*
-     * =========================
+     * ==================================================
      * 出題対象
-     * =========================
+     * ==================================================
      */
 
     let targetData = data;
 
     /*
-     * 領域別
-     *
-     * OR条件
+     * ==================================================
+     * 病態領域別
+     * ==================================================
      */
 
     if (categoryMode === "category") {
@@ -760,60 +615,75 @@ export default function AbbreviationQuiz({ data }: Props) {
       });
     }
 
+    /*
+     * ==================================================
+     * 法規制度
+     * ==================================================
+     */
+
     if (categoryMode === "law") {
       targetData = data.filter((item) => {
         return String(item["カテゴリ"] ?? "").trim() === "法規制度";
       });
     }
+
     /*
-     * =========================
+     * ==================================================
      * クイズ問題へ変換
-     * =========================
+     * ==================================================
      */
 
     const targetQuestions = targetData.map(convertToQuestion);
 
     /*
-     * =========================
+     * ==================================================
      * ランダム抽選
-     * =========================
-     *
-     * この時点で一度だけ抽選。
-     *
-     * 以後はlocalStorageに保存された
-     * 問題セットをそのまま使用する。
+     * ==================================================
      */
 
     const shuffled = shuffle(targetQuestions);
 
     /*
-     * =========================
+     * ==================================================
      * 問題数決定
-     * =========================
-     *
-     * -1 = 全問
-     *
-     * 問題数が足りない場合は
-     * 現在ある問題をすべて使用する。
+     * ==================================================
      */
 
     const finalQuestions =
       questionCount === -1 ? shuffled : shuffled.slice(0, questionCount);
 
+    return finalQuestions;
+  }
+
+  /*
+
+==================================================
+出題開始
+==================================================
+*/
+
+  function handleStart() {
+    const finalQuestions = createQuizQuestions();
+
+    if (!finalQuestions) {
+      return;
+    }
+
     /*
      * =========================
-     * 回答状態作成
+     * 回答状態
      * =========================
      */
 
     const answers: QuizAnswer[] = finalQuestions.map(() => ({
       selectedValue: null,
+
       isCorrect: null,
     }));
 
     /*
      * =========================
-     * クイズ状態作成
+     * クイズ状態
      * =========================
      */
 
@@ -834,26 +704,69 @@ export default function AbbreviationQuiz({ data }: Props) {
     };
 
     /*
-     * 回答検索欄もリセット
+     * =========================
+     * 回答検索欄リセット
+     * =========================
      */
 
     setAnswerSearch("");
 
     /*
-     * 問題セットを固定
+     * =========================
+     * クイズ開始
+     * =========================
      */
 
     setQuizState(newQuizState);
   }
 
   /*
-   * ==================================================
-   * 現在の問題の回答候補
-   * ==================================================
-   *
-   * 回答候補は今回の出題問題だけではなく、
-   * 登録されている全データから取得する。
-   */
+
+==================================================
+出題PDF
+==================================================
+*/
+
+  function handlePrintPaper() {
+    const finalQuestions = createQuizQuestions();
+
+    if (!finalQuestions) {
+      return;
+    }
+
+    const paperQuizState: QuizState = {
+      questionCount,
+
+      answerMode,
+
+      categoryMode,
+
+      selectedCategories: [...selectedCategories],
+
+      questions: finalQuestions,
+
+      currentQuestionIndex: 0,
+
+      answers: finalQuestions.map(() => ({
+        selectedValue: null,
+
+        isCorrect: null,
+      })),
+    };
+
+    printAbbreviationQuizPaper(paperQuizState);
+  }
+
+  /*
+
+==================================================
+回答候補
+==================================================
+
+
+今回の出題問題だけではなく、
+全データから候補を取得する。
+*/
 
   const answerCandidates = useMemo(() => {
     if (!quizState) {
@@ -863,7 +776,7 @@ export default function AbbreviationQuiz({ data }: Props) {
     const searchText = normalize(answerSearch);
 
     /*
-     * 検索文字列が空なら候補を表示しない。
+     * 検索文字がなければ候補を表示しない。
      */
 
     if (!searchText) {
@@ -871,9 +784,9 @@ export default function AbbreviationQuiz({ data }: Props) {
     }
 
     /*
-     * =========================
+     * ==================================================
      * 略語 → 日本語名
-     * =========================
+     * ==================================================
      */
 
     if (quizState.answerMode === "abbreviation-to-japanese") {
@@ -889,9 +802,9 @@ export default function AbbreviationQuiz({ data }: Props) {
     }
 
     /*
-     * =========================
+     * ==================================================
      * 日本語名 → 略語
-     * =========================
+     * ==================================================
      */
 
     const candidates = data
@@ -906,20 +819,218 @@ export default function AbbreviationQuiz({ data }: Props) {
   }, [data, quizState, answerSearch]);
 
   /*
-   * ==================================================
-   * localStorage確認中
-   * ==================================================
-   */
+
+==================================================
+回答候補選択
+==================================================
+*/
+
+  function handleSelectAnswer(candidate: string) {
+    setQuizState((current) => {
+      if (!current) {
+        return current;
+      }
+
+      const currentAnswer = current.answers[current.currentQuestionIndex];
+
+      /*
+       * すでに回答済みなら変更しない。
+       */
+
+      if (currentAnswer?.isCorrect !== null) {
+        return current;
+      }
+
+      const answers = [...current.answers];
+
+      answers[current.currentQuestionIndex] = {
+        selectedValue: candidate,
+
+        isCorrect: null,
+      };
+
+      return {
+        ...current,
+
+        answers,
+      };
+    });
+
+    setAnswerSearch(candidate);
+  }
+
+  /*
+
+==================================================
+回答する
+==================================================
+*/
+
+  function handleAnswer() {
+    setQuizState((current) => {
+      if (!current) {
+        return current;
+      }
+
+      const question = current.questions[current.currentQuestionIndex];
+
+      const answer = current.answers[current.currentQuestionIndex];
+
+      /*
+       * 問題または回答が存在しない場合
+       */
+
+      if (!question || !answer) {
+        return current;
+      }
+
+      /*
+       * 回答未選択
+       */
+
+      if (!answer.selectedValue) {
+        return current;
+      }
+
+      /*
+       * すでに回答済み
+       */
+
+      if (answer.isCorrect !== null) {
+        return current;
+      }
+
+      /*
+       * ==================================================
+       * 正誤判定
+       * ==================================================
+       */
+
+      const isCorrect = judgeAnswer(
+        answer.selectedValue,
+
+        question,
+
+        current.answerMode,
+      );
+
+      /*
+       * ==================================================
+       * 回答結果保存
+       * ==================================================
+       */
+
+      const answers = [...current.answers];
+
+      answers[current.currentQuestionIndex] = {
+        selectedValue: answer.selectedValue,
+
+        isCorrect,
+      };
+
+      return {
+        ...current,
+
+        answers,
+      };
+    });
+  }
+
+  /*
+
+==================================================
+次の問題
+==================================================
+*/
+
+  function handleNextQuestion() {
+    setAnswerSearch("");
+
+    setQuizState((current) => {
+      if (!current) {
+        return current;
+      }
+
+      return {
+        ...current,
+
+        currentQuestionIndex: current.currentQuestionIndex + 1,
+      };
+    });
+  }
+
+  /*
+
+==================================================
+スキップ
+==================================================
+*/
+
+  function handleSkip() {
+    setAnswerSearch("");
+
+    setQuizState((current) => {
+      if (!current) {
+        return current;
+      }
+
+      /*
+       * 回答状態は変更しない。
+       *
+       * selectedValue: null
+       * isCorrect: null
+       *
+       * のまま次へ進む。
+       */
+
+      return {
+        ...current,
+
+        currentQuestionIndex: current.currentQuestionIndex + 1,
+      };
+    });
+  }
+
+  /*
+
+==================================================
+中断
+==================================================
+*/
+
+  function handleAbort() {
+    if (window.confirm("クイズを中断して結果画面へ移動しますか？")) {
+      setQuizState((current) => {
+        if (!current) {
+          return current;
+        }
+
+        return {
+          ...current,
+
+          currentQuestionIndex: current.questions.length,
+        };
+      });
+    }
+  }
+
+  /*
+
+==================================================
+localStorage確認中
+==================================================
+*/
 
   if (!storageChecked) {
     return null;
   }
 
   /*
-   * ==================================================
-   * クイズ中
-   * ==================================================
-   */
+
+==================================================
+クイズ中
+==================================================
+*/
 
   if (quizState !== null) {
     const currentQuestion = quizState.questions[quizState.currentQuestionIndex];
@@ -931,13 +1042,31 @@ export default function AbbreviationQuiz({ data }: Props) {
      */
 
     if (!currentQuestion) {
+      /*
+       * =========================
+       * 正解数
+       * =========================
+       */
+
       const correctCount = quizState.answers.filter(
         (answer) => answer.isCorrect === true,
       ).length;
 
+      /*
+       * =========================
+       * 不正解数
+       * =========================
+       */
+
       const incorrectCount = quizState.answers.filter(
         (answer) => answer.isCorrect === false,
       ).length;
+
+      /*
+       * =========================
+       * 未回答数
+       * =========================
+       */
 
       const unansweredCount = quizState.answers.filter(
         (answer) => answer.isCorrect === null,
@@ -949,8 +1078,8 @@ export default function AbbreviationQuiz({ data }: Props) {
             <h1 className={styles.heading}>🧠 略語クイズ 結果</h1>
 
             {/* =========================
-                集計
-            ========================== */}
+            集計
+        ========================== */}
 
             <div className={styles.resultSummary}>
               <div className={styles.summaryItem}>
@@ -981,16 +1110,19 @@ export default function AbbreviationQuiz({ data }: Props) {
             </div>
 
             {/* =========================
-                結果表
-            ========================== */}
+            結果表
+        ========================== */}
 
             <div className={styles.resultTableWrapper}>
               <table className={styles.resultTable}>
                 <thead>
                   <tr>
                     <th>問題</th>
+
                     <th>回答</th>
+
                     <th>正答</th>
+
                     <th>正誤</th>
                   </tr>
                 </thead>
@@ -1004,18 +1136,27 @@ export default function AbbreviationQuiz({ data }: Props) {
                         ? question.abbreviation
                         : question.japaneseName;
 
-                    const correctAnswer =
-                      quizState.answerMode === "abbreviation-to-japanese"
-                        ? question.japaneseName
-                        : question.abbreviation;
+                    const correctAnswer = getCorrectAnswer(
+                      question,
+
+                      quizState.answerMode,
+                    );
 
                     return (
                       <tr key={`${question.rowNumber}-${index}`}>
+                        {/* 問題 */}
+
                         <td>{questionText}</td>
+
+                        {/* 回答 */}
 
                         <td>{answer.selectedValue || "未回答"}</td>
 
+                        {/* 正答 */}
+
                         <td>{correctAnswer}</td>
+
+                        {/* 正誤 */}
 
                         <td>
                           {answer.isCorrect === true ? (
@@ -1038,41 +1179,36 @@ export default function AbbreviationQuiz({ data }: Props) {
             </div>
 
             {/* =========================
-                結果操作
-            ========================== */}
+            結果操作
+        ========================== */}
 
             <div className={styles.resultActions}>
-              {/* =========================
-                  PDF出力
-              ========================== */}
+              {/* PDF */}
 
               <button
                 type="button"
                 className={styles.primaryButton}
                 onClick={() =>
-                  printQuizResult(
+                  printAbbreviationQuizResult(
                     quizState,
+
                     correctCount,
+
                     incorrectCount,
+
                     unansweredCount,
                   )
                 }
               >
-                PDF出力
+                結果PDF
               </button>
 
-              {/* =========================
-                  再度出題
-              ========================== */}
+              {/* 再度出題 */}
 
               <button
                 type="button"
                 className={styles.secondaryButton}
                 onClick={() => {
-                  /*
-                   * 古いクイズ状態を削除
-                   */
-
                   localStorage.removeItem(STORAGE_KEY);
 
                   setQuizState(null);
@@ -1083,18 +1219,12 @@ export default function AbbreviationQuiz({ data }: Props) {
                 再度出題
               </button>
 
-              {/* =========================
-                  閉じる
-              ========================== */}
+              {/* 閉じる */}
 
               <button
                 type="button"
                 className={styles.secondaryButton}
                 onClick={() => {
-                  /*
-                   * 古いクイズ状態を削除
-                   */
-
                   localStorage.removeItem(STORAGE_KEY);
 
                   setQuizState(null);
@@ -1135,10 +1265,11 @@ export default function AbbreviationQuiz({ data }: Props) {
      * ==================================================
      */
 
-    const correctAnswer =
-      quizState.answerMode === "abbreviation-to-japanese"
-        ? currentQuestion.japaneseName
-        : currentQuestion.abbreviation;
+    const correctAnswer = getCorrectAnswer(
+      currentQuestion,
+
+      quizState.answerMode,
+    );
 
     /*
      * ==================================================
@@ -1148,12 +1279,18 @@ export default function AbbreviationQuiz({ data }: Props) {
 
     const hasAnswered = currentAnswer?.isCorrect !== null;
 
+    /*
+     * ==================================================
+     * クイズ画面
+     * ==================================================
+     */
+
     return (
       <main className={styles.container}>
         <div className={styles.card}>
           {/* =========================
-              ヘッダー
-          ========================== */}
+          ヘッダー
+      ========================== */}
 
           <div className={styles.questionHeader}>
             <h1 className={styles.heading}>🧠 略語クイズ</h1>
@@ -1165,8 +1302,8 @@ export default function AbbreviationQuiz({ data }: Props) {
           </div>
 
           {/* =========================
-              問題
-          ========================== */}
+          問題
+      ========================== */}
 
           <div className={styles.question}>
             <div className={styles.questionLabel}>
@@ -1179,11 +1316,15 @@ export default function AbbreviationQuiz({ data }: Props) {
           </div>
 
           {/* =========================
-              回答
-          ========================== */}
+          回答前
+      ========================== */}
 
           {!hasAnswered && (
             <div className={styles.answerArea}>
+              {/* =========================
+              回答検索
+          ========================== */}
+
               <input
                 type="text"
                 className={styles.answerInput}
@@ -1194,15 +1335,11 @@ export default function AbbreviationQuiz({ data }: Props) {
                 }
                 value={answerSearch}
                 onChange={(e) => {
-                  /*
-                   * 入力中は回答として保存しない。
-                   */
-
                   setAnswerSearch(e.target.value);
 
                   /*
-                   * 新しい検索を開始した場合、
-                   * 現在の候補選択を解除。
+                   * 検索文字を変更したら
+                   * 現在の選択を解除する。
                    */
 
                   setQuizState((current) => {
@@ -1210,25 +1347,37 @@ export default function AbbreviationQuiz({ data }: Props) {
                       return current;
                     }
 
+                    const currentAnswer =
+                      current.answers[current.currentQuestionIndex];
+
+                    /*
+                     * すでに回答済みなら変更しない。
+                     */
+
+                    if (currentAnswer?.isCorrect !== null) {
+                      return current;
+                    }
+
                     const answers = [...current.answers];
 
                     answers[current.currentQuestionIndex] = {
                       selectedValue: null,
+
                       isCorrect: null,
                     };
 
                     return {
                       ...current,
+
                       answers,
                     };
                   });
                 }}
-                disabled={hasAnswered}
               />
 
               {/* =========================
-                  検索候補
-              ========================== */}
+              検索候補
+          ========================== */}
 
               {answerSearch.trim() !== "" && answerCandidates.length > 0 && (
                 <div className={styles.candidateList}>
@@ -1237,43 +1386,17 @@ export default function AbbreviationQuiz({ data }: Props) {
                       key={candidate}
                       type="button"
                       className={styles.candidate}
-                      onClick={() => {
-                        /*
-                         * 候補クリック時に
-                         * 元データの値を保存。
-                         */
-
-                        setQuizState((current) => {
-                          if (!current) {
-                            return current;
-                          }
-
-                          const answers = [...current.answers];
-
-                          answers[current.currentQuestionIndex] = {
-                            selectedValue: candidate,
-                            isCorrect: null,
-                          };
-
-                          return {
-                            ...current,
-                            answers,
-                          };
-                        });
-
-                        /*
-                         * 入力欄にも
-                         * 選択値を表示。
-                         */
-
-                        setAnswerSearch(candidate);
-                      }}
+                      onClick={() => handleSelectAnswer(candidate)}
                     >
                       {candidate}
                     </button>
                   ))}
                 </div>
               )}
+
+              {/* =========================
+              候補なし
+          ========================== */}
 
               {answerSearch.trim() !== "" && answerCandidates.length === 0 && (
                 <div className={styles.noCategory}>
@@ -1282,8 +1405,8 @@ export default function AbbreviationQuiz({ data }: Props) {
               )}
 
               {/* =========================
-                  選択済み候補
-              ========================== */}
+              選択中
+          ========================== */}
 
               {currentAnswer?.selectedValue && (
                 <div className={styles.selectedCandidate}>
@@ -1293,107 +1416,27 @@ export default function AbbreviationQuiz({ data }: Props) {
               )}
 
               {/* =========================
-                  操作ボタン
-              ========================== */}
+              操作
+          ========================== */}
 
               <div className={styles.quizActions}>
-                {/* =========================
-                    回答する
-                ========================== */}
+                {/* 回答 */}
 
                 <button
                   type="button"
                   className={styles.primaryButton}
                   disabled={!currentAnswer?.selectedValue}
-                  onClick={() => {
-                    setQuizState((current) => {
-                      if (!current) {
-                        return current;
-                      }
-
-                      const question =
-                        current.questions[current.currentQuestionIndex];
-
-                      const answer =
-                        current.answers[current.currentQuestionIndex];
-
-                      /*
-                       * 候補未選択なら回答不可。
-                       */
-
-                      if (!answer?.selectedValue) {
-                        return current;
-                      }
-
-                      /*
-                       * 正誤判定。
-                       *
-                       * 問題元レコードの
-                       * 正答値と比較する。
-                       */
-
-                      const correct =
-                        normalize(answer.selectedValue) ===
-                        normalize(
-                          current.answerMode === "abbreviation-to-japanese"
-                            ? question.japaneseName
-                            : question.abbreviation,
-                        );
-
-                      const answers = [...current.answers];
-
-                      answers[current.currentQuestionIndex] = {
-                        selectedValue: answer.selectedValue,
-                        isCorrect: correct,
-                      };
-
-                      return {
-                        ...current,
-                        answers,
-                      };
-                    });
-                  }}
+                  onClick={handleAnswer}
                 >
                   回答する
                 </button>
 
-                {/* =========================
-                    次の問題へスキップ
-                ========================== */}
+                {/* スキップ */}
 
                 <button
                   type="button"
                   className={styles.secondaryButton}
-                  onClick={() => {
-                    /*
-                     * 検索欄をリセット
-                     */
-
-                    setAnswerSearch("");
-
-                    /*
-                     * 回答状態は変更しない。
-                     *
-                     * selectedValue: null
-                     * isCorrect: null
-                     *
-                     * のまま次の問題へ進むため、
-                     * 結果画面では「未回答」として扱われる。
-                     */
-
-                    setQuizState((current) => {
-                      if (!current) {
-                        return current;
-                      }
-
-                      const nextIndex = current.currentQuestionIndex + 1;
-
-                      return {
-                        ...current,
-                        currentQuestionIndex: nextIndex,
-                      };
-                    });
-                  }}
+                  onClick={handleSkip}
                 >
                   {quizState.currentQuestionIndex + 1 <
                   quizState.questions.length
@@ -1401,29 +1444,12 @@ export default function AbbreviationQuiz({ data }: Props) {
                     : "スキップして結果を見る"}
                 </button>
 
-                {/* =========================
-                    中断
-                ========================== */}
+                {/* 中断 */}
 
                 <button
                   type="button"
                   className={styles.dangerButton}
-                  onClick={() => {
-                    if (
-                      window.confirm("クイズを中断して結果画面へ移動しますか？")
-                    ) {
-                      setQuizState((current) => {
-                        if (!current) {
-                          return current;
-                        }
-
-                        return {
-                          ...current,
-                          currentQuestionIndex: current.questions.length,
-                        };
-                      });
-                    }
-                  }}
+                  onClick={handleAbort}
                 >
                   中断
                 </button>
@@ -1432,14 +1458,23 @@ export default function AbbreviationQuiz({ data }: Props) {
           )}
 
           {/* =========================
-              正誤表示
-          ========================== */}
+          回答後
+      ========================== */}
 
           {hasAnswered && (
             <>
+              {/* =========================
+              正誤
+          ========================== */}
+
               {currentAnswer.isCorrect ? (
                 <div className={styles.correct}>
                   <div>⭕ 正解！</div>
+
+                  <div className={styles.correctAnswer}>
+                    あなたの回答：
+                    {currentAnswer.selectedValue}
+                  </div>
 
                   <div className={styles.correctAnswer}>
                     正答：
@@ -1451,6 +1486,11 @@ export default function AbbreviationQuiz({ data }: Props) {
                   <div>❌ 不正解</div>
 
                   <div className={styles.correctAnswer}>
+                    あなたの回答：
+                    {currentAnswer.selectedValue}
+                  </div>
+
+                  <div className={styles.correctAnswer}>
                     正答：
                     {correctAnswer}
                   </div>
@@ -1458,29 +1498,14 @@ export default function AbbreviationQuiz({ data }: Props) {
               )}
 
               {/* =========================
-                  次の問題
-              ========================== */}
+              次の問題
+          ========================== */}
 
               <div className={styles.quizActions}>
                 <button
                   type="button"
                   className={styles.primaryButton}
-                  onClick={() => {
-                    setAnswerSearch("");
-
-                    setQuizState((current) => {
-                      if (!current) {
-                        return current;
-                      }
-
-                      const nextIndex = current.currentQuestionIndex + 1;
-
-                      return {
-                        ...current,
-                        currentQuestionIndex: nextIndex,
-                      };
-                    });
-                  }}
+                  onClick={handleNextQuestion}
                 >
                   {quizState.currentQuestionIndex + 1 <
                   quizState.questions.length
@@ -1488,25 +1513,14 @@ export default function AbbreviationQuiz({ data }: Props) {
                     : "結果を見る"}
                 </button>
 
+                {/* =========================
+                中断
+            ========================== */}
+
                 <button
                   type="button"
                   className={styles.dangerButton}
-                  onClick={() => {
-                    if (
-                      window.confirm("クイズを中断して結果画面へ移動しますか？")
-                    ) {
-                      setQuizState((current) => {
-                        if (!current) {
-                          return current;
-                        }
-
-                        return {
-                          ...current,
-                          currentQuestionIndex: current.questions.length,
-                        };
-                      });
-                    }
-                  }}
+                  onClick={handleAbort}
                 >
                   中断
                 </button>
@@ -1519,10 +1533,11 @@ export default function AbbreviationQuiz({ data }: Props) {
   }
 
   /*
-   * ==================================================
-   * 出題設定画面
-   * ==================================================
-   */
+
+==================================================
+出題設定画面
+==================================================
+*/
 
   return (
     <main className={styles.container}>
@@ -1530,8 +1545,8 @@ export default function AbbreviationQuiz({ data }: Props) {
         <h1 className={styles.heading}>🧠 略語クイズ</h1>
 
         {/* =========================
-            出題問題数
-        ========================== */}
+        出題問題数
+    ========================== */}
 
         <section className={styles.settingSection}>
           <h2 className={styles.settingTitle}>1. 出題問題数</h2>
@@ -1554,8 +1569,8 @@ export default function AbbreviationQuiz({ data }: Props) {
         </section>
 
         {/* =========================
-            回答形式
-        ========================== */}
+        回答形式
+    ========================== */}
 
         <section className={styles.settingSection}>
           <h2 className={styles.settingTitle}>2. 回答形式</h2>
@@ -1578,8 +1593,8 @@ export default function AbbreviationQuiz({ data }: Props) {
         </section>
 
         {/* =========================
-            出題カテゴリ
-        ========================== */}
+        出題カテゴリ
+    ========================== */}
 
         <section className={styles.settingSection}>
           <h2 className={styles.settingTitle}>3. 出題カテゴリ</h2>
@@ -1604,6 +1619,7 @@ export default function AbbreviationQuiz({ data }: Props) {
               />
               病態領域別
             </label>
+
             <label className={styles.radioLabel}>
               <input
                 type="radio"
@@ -1617,8 +1633,8 @@ export default function AbbreviationQuiz({ data }: Props) {
         </section>
 
         {/* =========================
-            領域別設定
-        ========================== */}
+        病態領域別設定
+    ========================== */}
 
         {categoryMode === "category" && (
           <section className={styles.settingSection}>
@@ -1654,8 +1670,16 @@ export default function AbbreviationQuiz({ data }: Props) {
         )}
 
         {/* =========================
-            出題開始
-        ========================== */}
+        出題開始
+    ========================== */}
+
+        <button
+          type="button"
+          className={styles.secondaryButton}
+          onClick={handlePrintPaper}
+        >
+          問題をPDF出力
+        </button>
 
         <button
           type="button"
