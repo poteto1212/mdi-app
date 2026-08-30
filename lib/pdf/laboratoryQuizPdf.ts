@@ -187,32 +187,38 @@ export function printLaboratoryQuizPaper(quizState: LaboratoryQuizState): void {
         question.upperLimit !== 0 ? String(question.upperLimit) : "－";
 
       return `
-        <tr>
-          <td class="number">
-            ${index + 1}
-          </td>
+      <tr>
+        <td class="number">
+          ${index + 1}
+        </td>
 
-          <td class="question">
-            ${escapeHtml(question.abbreviation)}
-            <br />
-            <span class="japaneseName">
-              ${escapeHtml(question.japaneseName)}
-            </span>
-          </td>
+        <td class="question">
+          ${escapeHtml(question.abbreviation)}
+          <br />
+          <span class="japaneseName">
+            ${escapeHtml(question.japaneseName)}
+          </span>
+        </td>
 
-          <td class="unit">
-            ${escapeHtml(question.unit)}
-          </td>
+        <td class="unit">
+          ${escapeHtml(question.unit)}
+        </td>
 
-          <td class="correctAnswer">
-            ${escapeHtml(lowerAnswer)}
-          </td>
+        <td class="correctAnswer">
+          ${
+            question.lowerLimit !== 0
+              ? `<div>下限：${escapeHtml(lowerAnswer)}</div>`
+              : ""
+          }
 
-          <td class="correctAnswer">
-            ${escapeHtml(upperAnswer)}
-          </td>
-        </tr>
-      `;
+          ${
+            question.upperLimit !== 0
+              ? `<div>上限：${escapeHtml(upperAnswer)}</div>`
+              : ""
+          }
+        </td>
+      </tr>
+    `;
     })
     .join("");
 
@@ -381,12 +387,18 @@ export function printLaboratoryQuizPaper(quizState: LaboratoryQuizState): void {
           }
 
           td.correctAnswer {
-            text-align: center;
+            text-align: left;
 
             font-size: 11px;
 
             font-weight: bold;
+
+            line-height: 2;
           }
+
+         td.correctAnswer div {
+            min-height: 6mm;
+          } 
 
           .footer {
             margin-top: 4mm;
@@ -510,11 +522,7 @@ export function printLaboratoryQuizPaper(quizState: LaboratoryQuizState): void {
                 </th>
 
                 <th>
-                  下限
-                </th>
-
-                <th>
-                  上限
+                  正解
                 </th>
 
               </tr>
