@@ -124,37 +124,51 @@ export function printLaboratoryQuizPaper(quizState: LaboratoryQuizState): void {
 
   const questionRows = quizState.questions
     .map((question, index) => {
-      const lowerAnswer = question.lowerLimit !== 0 ? "" : "－";
+      const lowerAnswer =
+        question.lowerLimit !== 0
+          ? `
+          <div>
+            下限：
+          </div>
+        `
+          : "";
 
-      const upperAnswer = question.upperLimit !== 0 ? "" : "－";
+      const upperAnswer =
+        question.upperLimit !== 0
+          ? `
+          <div>
+            上限：
+          </div>
+        `
+          : "";
 
       return `
-        <tr>
-          <td class="number">
-            ${index + 1}
-          </td>
+      <tr>
 
-          <td class="question">
-            ${escapeHtml(question.abbreviation)}
-            <br />
-            <span class="japaneseName">
-              ${escapeHtml(question.japaneseName)}
-            </span>
-          </td>
+        <td class="number">
+          ${index + 1}
+        </td>
 
-          <td class="unit">
-            ${escapeHtml(question.unit)}
-          </td>
+        <td class="question">
+          ${escapeHtml(question.abbreviation)}
+          <br />
 
-          <td class="answer">
-            ${lowerAnswer}
-          </td>
+          <span class="japaneseName">
+            ${escapeHtml(question.japaneseName)}
+          </span>
+        </td>
 
-          <td class="answer">
-            ${upperAnswer}
-          </td>
-        </tr>
-      `;
+        <td class="unit">
+          ${escapeHtml(question.unit)}
+        </td>
+
+        <td class="answer">
+          ${lowerAnswer}
+          ${upperAnswer}
+        </td>
+
+      </tr>
+    `;
     })
     .join("");
 
@@ -173,32 +187,38 @@ export function printLaboratoryQuizPaper(quizState: LaboratoryQuizState): void {
         question.upperLimit !== 0 ? String(question.upperLimit) : "－";
 
       return `
-        <tr>
-          <td class="number">
-            ${index + 1}
-          </td>
+      <tr>
+        <td class="number">
+          ${index + 1}
+        </td>
 
-          <td class="question">
-            ${escapeHtml(question.abbreviation)}
-            <br />
-            <span class="japaneseName">
-              ${escapeHtml(question.japaneseName)}
-            </span>
-          </td>
+        <td class="question">
+          ${escapeHtml(question.abbreviation)}
+          <br />
+          <span class="japaneseName">
+            ${escapeHtml(question.japaneseName)}
+          </span>
+        </td>
 
-          <td class="unit">
-            ${escapeHtml(question.unit)}
-          </td>
+        <td class="unit">
+          ${escapeHtml(question.unit)}
+        </td>
 
-          <td class="correctAnswer">
-            ${escapeHtml(lowerAnswer)}
-          </td>
+        <td class="correctAnswer">
+          ${
+            question.lowerLimit !== 0
+              ? `<div>下限：${escapeHtml(lowerAnswer)}</div>`
+              : ""
+          }
 
-          <td class="correctAnswer">
-            ${escapeHtml(upperAnswer)}
-          </td>
-        </tr>
-      `;
+          ${
+            question.upperLimit !== 0
+              ? `<div>上限：${escapeHtml(upperAnswer)}</div>`
+              : ""
+          }
+        </td>
+      </tr>
+    `;
     })
     .join("");
 
@@ -327,11 +347,7 @@ export function printLaboratoryQuizPaper(quizState: LaboratoryQuizState): void {
           }
 
           th:nth-child(4) {
-            width: 20%;
-          }
-
-          th:nth-child(5) {
-            width: 20%;
+            width: 40%;
           }
 
           td.number {
@@ -359,18 +375,30 @@ export function printLaboratoryQuizPaper(quizState: LaboratoryQuizState): void {
           td.answer {
             height: 15mm;
 
-            text-align: center;
+            text-align: left;
 
             font-size: 11px;
+
+            line-height: 2;
+          }
+
+          td.answer div {
+            min-height: 6mm;
           }
 
           td.correctAnswer {
-            text-align: center;
+            text-align: left;
 
             font-size: 11px;
 
             font-weight: bold;
+
+            line-height: 2;
           }
+
+         td.correctAnswer div {
+            min-height: 6mm;
+          } 
 
           .footer {
             margin-top: 4mm;
@@ -440,11 +468,7 @@ export function printLaboratoryQuizPaper(quizState: LaboratoryQuizState): void {
                 </th>
 
                 <th>
-                  下限回答
-                </th>
-
-                <th>
-                  上限回答
+                  回答
                 </th>
 
               </tr>
@@ -498,11 +522,7 @@ export function printLaboratoryQuizPaper(quizState: LaboratoryQuizState): void {
                 </th>
 
                 <th>
-                  下限
-                </th>
-
-                <th>
-                  上限
+                  正解
                 </th>
 
               </tr>

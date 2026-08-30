@@ -386,14 +386,23 @@ export default function LaboratoryQuiz({ data }: Props) {
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(quizState));
   }, [quizState, storageChecked]);
-
   /*
    * ==================================================
-   * 出題開始
+   * クイズ問題作成
+   * ==================================================
+   *
+   * 現在の出題設定から問題を作成する。
+   *
+   * ・通常クイズ
+   * ・紙形式PDF
+   *
+   * の両方から利用する。
+   *
+   * この関数ではquizStateを変更しない。
    * ==================================================
    */
 
-  function handleStart() {
+  function createQuizQuestions(): QuizQuestion[] {
     /*
      * =========================
      * 問題変換
@@ -416,8 +425,28 @@ export default function LaboratoryQuiz({ data }: Props) {
      * =========================
      */
 
-    const finalQuestions =
-      questionCount === -1 ? shuffled : shuffled.slice(0, questionCount);
+    return questionCount === -1 ? shuffled : shuffled.slice(0, questionCount);
+  }
+  /*
+   * ==================================================
+   * 出題開始
+   * ==================================================
+   */
+
+  /*
+   * ==================================================
+   * 出題開始
+   * ==================================================
+   */
+
+  function handleStart() {
+    /*
+     * =========================
+     * 問題作成
+     * =========================
+     */
+
+    const finalQuestions = createQuizQuestions();
 
     /*
      * =========================
@@ -425,7 +454,7 @@ export default function LaboratoryQuiz({ data }: Props) {
      * =========================
      */
 
-    const answers = finalQuestions.map(() => ({
+    const answers: QuizAnswer[] = finalQuestions.map(() => ({
       lowerValue: null,
 
       upperValue: null,
@@ -469,7 +498,69 @@ export default function LaboratoryQuiz({ data }: Props) {
 
     setQuizState(newQuizState);
   }
+  /*
+   * ==================================================
+   * 紙形式PDF作成
+   * ==================================================
+   *
+   * 通常クイズとは別に問題セットを作成し、
+   * quizState自体は変更しない。
+   *
+   * 問題ページと解答ページには
+   * 同じpaperQuizStateを渡すため、
+   * 問題順は完全に同期する。
+   * ==================================================
+   */
 
+  function handlePrintQuizPaper() {
+    /*
+     * =========================
+     * 問題作成
+     * =========================
+     */
+
+    const finalQuestions = createQuizQuestions();
+
+    /*
+     * =========================
+     * PDF用回答状態
+     * =========================
+     */
+
+    const answers: QuizAnswer[] = finalQuestions.map(() => ({
+      lowerValue: null,
+
+      upperValue: null,
+
+      lowerResult: null,
+
+      upperResult: null,
+    }));
+
+    /*
+     * =========================
+     * PDF用QuizState
+     * =========================
+     */
+
+    const paperQuizState: QuizState = {
+      questionCount,
+
+      questions: finalQuestions,
+
+      currentQuestionIndex: 0,
+
+      answers,
+    };
+
+    /*
+     * =========================
+     * PDF出力
+     * =========================
+     */
+
+    printLaboratoryQuizPaper(paperQuizState);
+  }
   /*
    * ==================================================
    * localStorage確認中
@@ -1223,7 +1314,13 @@ export default function LaboratoryQuiz({ data }: Props) {
         {/* =========================
             出題開始
         ========================== */}
-
+        <button
+          type="button"
+          className={styles.secondaryButton}
+          onClick={handlePrintQuizPaper}
+        >
+          PDF問題出力
+        </button>
         <button
           type="button"
           className={styles.primaryButton}
