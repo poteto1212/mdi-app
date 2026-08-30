@@ -817,8 +817,12 @@ export default function MedicationQuiz({ data }: Props) {
       const selected =
         selectedLargeCategories.length > 0
           ? selectedLargeCategories
-          : uniqueStrings(
-              targetData.map((item) => getText(item, "大分類")).filter(Boolean),
+          : shuffle(
+              uniqueStrings(
+                targetData
+                  .map((item) => getText(item, "大分類"))
+                  .filter(Boolean),
+              ),
             );
 
       return selected
@@ -860,8 +864,12 @@ export default function MedicationQuiz({ data }: Props) {
       const selected =
         selectedSmallCategories.length > 0
           ? selectedSmallCategories
-          : uniqueStrings(
-              targetData.map((item) => getText(item, "小分類")).filter(Boolean),
+          : shuffle(
+              uniqueStrings(
+                targetData
+                  .map((item) => getText(item, "小分類"))
+                  .filter(Boolean),
+              ),
             );
 
       return selected
@@ -920,8 +928,10 @@ export default function MedicationQuiz({ data }: Props) {
     const selected =
       selectedIngredients.length > 0
         ? selectedIngredients
-        : uniqueStrings(
-            targetData.map((item) => getText(item, "成分名")).filter(Boolean),
+        : shuffle(
+            uniqueStrings(
+              targetData.map((item) => getText(item, "成分名")).filter(Boolean),
+            ),
           );
 
     return selected
