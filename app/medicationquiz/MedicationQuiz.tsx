@@ -7,12 +7,6 @@ import {
   printMedicationQuizResult,
 } from "@/lib/pdf/medicationQuizPdf";
 
-/*
- * ==================================================
- * データ型
- * ==================================================
- */
-
 type MedicationData = {
   [key: string]: string | number | null | undefined;
 };
@@ -20,12 +14,6 @@ type MedicationData = {
 type Props = {
   data: MedicationData[];
 };
-
-/*
- * ==================================================
- * 定数
- * ==================================================
- */
 
 const QUESTION_COUNTS = [
   { value: 5, label: "5問" },
@@ -39,12 +27,6 @@ type DosageForm = (typeof DOSAGE_FORMS)[number];
 
 type QuizLevel = "large" | "small" | "ingredient";
 
-/*
- * ==================================================
- * クイズ問題
- * ==================================================
- */
-
 type QuizQuestion = {
   id: string;
 
@@ -56,12 +38,6 @@ type QuizQuestion = {
 
   correctMedications: string[];
 };
-
-/*
- * ==================================================
- * 回答情報
- * ==================================================
- */
 
 type QuizAnswer = {
   selectedMedications: string[];
@@ -77,11 +53,7 @@ type QuizAnswer = {
   isPerfect: boolean;
 };
 
-/*
- * ==================================================
- * クイズ全体の状態
- * ==================================================
- */
+//状態管理
 
 type QuizState = {
   questionCount: number;
@@ -93,19 +65,10 @@ type QuizState = {
   answers: QuizAnswer[];
 };
 
-/*
- * ==================================================
- * localStorage
- * ==================================================
- */
-
+//ローカルストレージ情報
 const STORAGE_KEY = "medicationQuizState";
 
-/*
- * ==================================================
- * データ取得用関数
- * ==================================================
- */
+//データ取得
 
 function getText(item: MedicationData, key: string): string {
   return String(item[key] ?? "").trim();
