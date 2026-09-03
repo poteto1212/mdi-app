@@ -18,11 +18,18 @@ services:
 
     environment:
       NODE_ENV: development
+      DATABASE_URL: ${DATABASE_URL}
 
     command: sleep infinity
 
+    networks:
+      - mdi-network
+
     stdin_open: true
     tty: true
+networks:
+  mdi-network:
+    external: true
 
 volumes:
   node_modules:
