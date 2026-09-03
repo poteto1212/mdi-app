@@ -69,17 +69,11 @@ type QuizState = {
 const STORAGE_KEY = "medicationQuizState";
 
 //データ取得
-
 function getText(item: MedicationData, key: string): string {
   return String(item[key] ?? "").trim();
 }
 
-/*
- * ==================================================
- * 剤型判定
- * ==================================================
- */
-
+//剤型判定
 function getDosageForm(item: MedicationData): DosageForm | null {
   const value = getText(item, "剤型");
 
@@ -90,44 +84,24 @@ function getDosageForm(item: MedicationData): DosageForm | null {
   return null;
 }
 
-/*
- * ==================================================
- * 薬品名取得
- * ==================================================
- */
-
+//薬品名取得
 function getMedicationName(item: MedicationData): string {
   return getText(item, "薬品名");
 }
 
-/*
- * ==================================================
- * 配列の重複削除
- * ==================================================
- */
-
+//重複配列の削除
 function uniqueStrings(values: string[]): string[] {
   return Array.from(new Set(values));
 }
 
-/*
- * ==================================================
- * 剤型配列の重複削除
- * ==================================================
- */
-
+//剤型配列の重複削除
 function uniqueDosageForms(values: Array<DosageForm | null>): DosageForm[] {
   return Array.from(
     new Set(values.filter((value): value is DosageForm => value !== null)),
   );
 }
 
-/*
- * ==================================================
- * Fisher-Yatesシャッフル
- * ==================================================
- */
-
+//シャッフル
 function shuffle<T>(items: T[]): T[] {
   const result = [...items];
 
@@ -140,12 +114,7 @@ function shuffle<T>(items: T[]): T[] {
   return result;
 }
 
-/*
- * ==================================================
- * QuizState検証
- * ==================================================
- */
-
+//QuizState検証
 function isValidQuizState(value: unknown): value is QuizState {
   if (!value || typeof value !== "object") {
     return false;
@@ -175,12 +144,7 @@ function isValidQuizState(value: unknown): value is QuizState {
   return true;
 }
 
-/*
- * ==================================================
- * 回答判定
- * ==================================================
- */
-
+//回答判定
 function judgeAnswer(
   selectedMedications: string[],
   correctMedications: string[],
