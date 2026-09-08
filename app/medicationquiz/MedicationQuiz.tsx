@@ -159,9 +159,7 @@ function judgeAnswer(
   const correct = uniqueStrings(correctMedications);
 
   const correctSelected = correct.filter((name) => selected.includes(name));
-
   const missed = correct.filter((name) => !selected.includes(name));
-
   const extra = selected.filter((name) => !correct.includes(name));
 
   const score =
@@ -181,12 +179,7 @@ function judgeAnswer(
   };
 }
 
-/*
- * ==================================================
- * レベル表示
- * ==================================================
- */
-
+//レベル表示
 function getLevelLabel(level: QuizLevel): string {
   if (level === "large") {
     return "大分類";
@@ -199,95 +192,45 @@ function getLevelLabel(level: QuizLevel): string {
   return "成分";
 }
 
-/*
- * ==================================================
- * MedicationQuiz
- * ==================================================
- */
-
+//医薬品クイズ
 export default function MedicationQuiz({ data }: Props) {
-  /*
-   * ==================================================
-   * 出題設定
-   * ==================================================
-   */
-
+  //出題形式設定
   const [quizLevel, setQuizLevel] = useState<QuizLevel>("large");
-
+  //出題数設定
   const [questionCount, setQuestionCount] = useState(5);
 
-  /*
-   * ==================================================
-   * 剤型選択
-   * ==================================================
-   */
-
+  //剤型設定
   const [selectedDosageForms, setSelectedDosageForms] = useState<DosageForm[]>([
     "内服",
     "注射",
     "外用",
   ]);
 
-  /*
-   * ==================================================
-   * 大分類検索・選択
-   * ==================================================
-   */
-
+  //大分類検索・選択
   const [largeCategorySearch, setLargeCategorySearch] = useState("");
-
   const [selectedLargeCategories, setSelectedLargeCategories] = useState<
     string[]
   >([]);
 
-  /*
-   * ==================================================
-   * 小分類検索・選択
-   * ==================================================
-   */
-
+  //小分類検索・選択
   const [smallCategorySearch, setSmallCategorySearch] = useState("");
-
   const [selectedSmallCategories, setSelectedSmallCategories] = useState<
     string[]
   >([]);
 
-  /*
-   * ==================================================
-   * 成分検索・選択
-   * ==================================================
-   */
-
+  //成分検索・選択
   const [ingredientSearch, setIngredientSearch] = useState("");
-
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
 
-  /*
-   * ==================================================
-   * クイズ状態
-   * ==================================================
-   */
-
+  //クイズ状態管理
   const [quizState, setQuizState] = useState<QuizState | null>(null);
-
   const [storageChecked, setStorageChecked] = useState(false);
 
-  /*
-   * ==================================================
-   * 回答検索
-   * ==================================================
-   */
-
+  //回答検索
   const [answerSearch, setAnswerSearch] = useState("");
-
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
 
-  /*
-   * ==================================================
-   * 回答済み状態
-   * ==================================================
-   */
-
+  //回答済み状態
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
 
   /*
@@ -1231,12 +1174,7 @@ export default function MedicationQuiz({ data }: Props) {
 
     const currentAnswer = quizState.answers[quizState.currentQuestionIndex];
 
-    /*
-     * ==================================================
-     * 回答候補検索
-     * ==================================================
-     */
-
+    //正答候補検索機能
     const keyword = answerSearch.trim().toLowerCase();
 
     const answerCandidates = uniqueStrings(
