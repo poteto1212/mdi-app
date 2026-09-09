@@ -280,12 +280,7 @@ export default function MedicationQuiz({ data }: Props) {
     }
   }, []);
 
-  /*
-   * ==================================================
-   * localStorage保存
-   * ==================================================
-   */
-
+  //localStorage保存
   useEffect(() => {
     if (!storageChecked) {
       return;
@@ -299,48 +294,28 @@ export default function MedicationQuiz({ data }: Props) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(quizState));
   }, [quizState, storageChecked]);
 
-  /*
-   * ==================================================
-   * 大分類一覧
-   * ==================================================
-   */
-
+  //大分類一覧
   const largeCategories = useMemo(() => {
     return uniqueStrings(
       data.map((item) => getText(item, "大分類")).filter(Boolean),
     ).sort();
   }, [data]);
 
-  /*
-   * ==================================================
-   * 小分類一覧
-   * ==================================================
-   */
-
+  //小分類一覧
   const smallCategories = useMemo(() => {
     return uniqueStrings(
       data.map((item) => getText(item, "小分類")).filter(Boolean),
     ).sort();
   }, [data]);
 
-  /*
-   * ==================================================
-   * 成分一覧
-   * ==================================================
-   */
-
+  //成分一覧
   const ingredients = useMemo(() => {
     return uniqueStrings(
       data.map((item) => getText(item, "成分名")).filter(Boolean),
     ).sort();
   }, [data]);
 
-  /*
-   * ==================================================
-   * 大分類検索候補
-   * ==================================================
-   */
-
+  //大分類検索候補
   const filteredLargeCategories = useMemo(() => {
     const keyword = largeCategorySearch.trim().toLowerCase();
 
@@ -353,12 +328,7 @@ export default function MedicationQuiz({ data }: Props) {
     );
   }, [largeCategories, largeCategorySearch]);
 
-  /*
-   * ==================================================
-   * 小分類検索候補
-   * ==================================================
-   */
-
+  //小分類検索候補
   const filteredSmallCategories = useMemo(() => {
     const keyword = smallCategorySearch.trim().toLowerCase();
 
@@ -371,12 +341,7 @@ export default function MedicationQuiz({ data }: Props) {
     );
   }, [smallCategories, smallCategorySearch]);
 
-  /*
-   * ==================================================
-   * 成分検索候補
-   * ==================================================
-   */
-
+  //成分類検索候補
   const filteredIngredients = useMemo(() => {
     const keyword = ingredientSearch.trim().toLowerCase();
 
@@ -387,12 +352,7 @@ export default function MedicationQuiz({ data }: Props) {
     return ingredients.filter((value) => value.toLowerCase().includes(keyword));
   }, [ingredients, ingredientSearch]);
 
-  /*
-   * ==================================================
-   * 剤型選択変更
-   * ==================================================
-   */
-
+  //剤型選択変更
   function toggleDosageForm(dosageForm: DosageForm) {
     setSelectedDosageForms((current) => {
       if (current.includes(dosageForm)) {
@@ -403,12 +363,7 @@ export default function MedicationQuiz({ data }: Props) {
     });
   }
 
-  /*
-   * ==================================================
-   * 大分類選択
-   * ==================================================
-   */
-
+  //大分類選択
   function toggleLargeCategory(value: string) {
     setSelectedLargeCategories((current) =>
       current.includes(value)
@@ -417,12 +372,7 @@ export default function MedicationQuiz({ data }: Props) {
     );
   }
 
-  /*
-   * ==================================================
-   * 小分類選択
-   * ==================================================
-   */
-
+  //小分類選択
   function toggleSmallCategory(value: string) {
     setSelectedSmallCategories((current) =>
       current.includes(value)
@@ -431,12 +381,7 @@ export default function MedicationQuiz({ data }: Props) {
     );
   }
 
-  /*
-   * ==================================================
-   * 成分選択
-   * ==================================================
-   */
-
+  //成分選択
   function toggleIngredient(value: string) {
     setSelectedIngredients((current) =>
       current.includes(value)
@@ -445,48 +390,28 @@ export default function MedicationQuiz({ data }: Props) {
     );
   }
 
-  /*
-   * ==================================================
-   * 大分類選択解除
-   * ==================================================
-   */
-
+  //大分類選択解除
   function removeLargeCategory(value: string) {
     setSelectedLargeCategories((current) =>
       current.filter((item) => item !== value),
     );
   }
 
-  /*
-   * ==================================================
-   * 小分類選択解除
-   * ==================================================
-   */
-
+  //小分類選択解除
   function removeSmallCategory(value: string) {
     setSelectedSmallCategories((current) =>
       current.filter((item) => item !== value),
     );
   }
 
-  /*
-   * ==================================================
-   * 成分選択解除
-   * ==================================================
-   */
-
+  //成分選択解除
   function removeIngredient(value: string) {
     setSelectedIngredients((current) =>
       current.filter((item) => item !== value),
     );
   }
 
-  /*
-   * ==================================================
-   * 問題生成
-   * ==================================================
-   */
-
+  //問題生成
   function createQuestions(): QuizQuestion[] {
     let targetData = data.filter((item) => {
       const dosageForm = getDosageForm(item);
@@ -494,12 +419,7 @@ export default function MedicationQuiz({ data }: Props) {
       return dosageForm !== null && selectedDosageForms.includes(dosageForm);
     });
 
-    /*
-     * --------------------------------------------------
-     * 大分類
-     * --------------------------------------------------
-     */
-
+    //大分類
     if (quizLevel === "large") {
       if (selectedLargeCategories.length > 0) {
         targetData = targetData.filter((item) =>
@@ -525,27 +445,18 @@ export default function MedicationQuiz({ data }: Props) {
 
       return Array.from(grouped.entries()).map(([category, items]) => ({
         id: `large-${category}`,
-
         level: "large",
-
         questionValue: category,
-
         dosageForms: uniqueDosageForms(
           items.map((item) => getDosageForm(item)),
         ),
-
         correctMedications: uniqueStrings(
           items.map(getMedicationName).filter(Boolean),
         ),
       }));
     }
 
-    /*
-     * --------------------------------------------------
-     * 小分類
-     * --------------------------------------------------
-     */
-
+    //小分類
     if (quizLevel === "small") {
       if (selectedSmallCategories.length > 0) {
         targetData = targetData.filter((item) =>
@@ -571,27 +482,18 @@ export default function MedicationQuiz({ data }: Props) {
 
       return Array.from(grouped.entries()).map(([category, items]) => ({
         id: `small-${category}`,
-
         level: "small",
-
         questionValue: category,
-
         dosageForms: uniqueDosageForms(
           items.map((item) => getDosageForm(item)),
         ),
-
         correctMedications: uniqueStrings(
           items.map(getMedicationName).filter(Boolean),
         ),
       }));
     }
 
-    /*
-     * --------------------------------------------------
-     * 成分
-     * --------------------------------------------------
-     */
-
+    //成分
     if (selectedLargeCategories.length > 0) {
       targetData = targetData.filter((item) =>
         selectedLargeCategories.includes(getText(item, "大分類")),
@@ -628,48 +530,24 @@ export default function MedicationQuiz({ data }: Props) {
 
     return Array.from(grouped.entries()).map(([ingredient, items]) => ({
       id: `ingredient-${ingredient}`,
-
       level: "ingredient",
-
       questionValue: ingredient,
-
       dosageForms: uniqueDosageForms(items.map((item) => getDosageForm(item))),
-
       correctMedications: uniqueStrings(
         items.map(getMedicationName).filter(Boolean),
       ),
     }));
   }
 
-  /*
-   * ==================================================
-   * 問題数に応じて問題を作成
-   *
-   * 通常クイズはランダム
-   * ==================================================
-   */
-
+  //問題数に応じた問題生成(クイズモードではランダム)
   function createFinalQuestions(): QuizQuestion[] {
     const questions = createQuestions();
-
     const shuffled = shuffle(questions);
 
     return questionCount === -1 ? shuffled : shuffled.slice(0, questionCount);
   }
 
-  /*
-   * ==================================================
-   * PDF用問題作成
-   *
-   * ★重要
-   *
-   * ここではシャッフルしない。
-   *
-   * 選択されたチェックボックスの順番を
-   * そのまま問題順として使用する。
-   * ==================================================
-   */
-
+  //PDF用問題生成(PDFモードではユーザーが選択した領域順で問題生成)
   function createPaperTestQuestions(): QuizQuestion[] {
     let targetData = data.filter((item) => {
       const dosageForm = getDosageForm(item);
@@ -677,12 +555,7 @@ export default function MedicationQuiz({ data }: Props) {
       return dosageForm !== null && selectedDosageForms.includes(dosageForm);
     });
 
-    /*
-     * --------------------------------------------------
-     * 大分類
-     * --------------------------------------------------
-     */
-
+    //大分類
     if (quizLevel === "large") {
       const selected =
         selectedLargeCategories.length > 0
@@ -1166,46 +1039,25 @@ export default function MedicationQuiz({ data }: Props) {
       );
     }
 
-    /*
-     * ==================================================
-     * 現在の回答状態
-     * ==================================================
-     */
+    //現在の回答状態
 
     const currentAnswer = quizState.answers[quizState.currentQuestionIndex];
 
     //正答候補検索機能
     const keyword = answerSearch.trim().toLowerCase();
-
     const answerCandidates = uniqueStrings(
-      data
-        .filter((item) => {
-          const dosageForm = getDosageForm(item);
-
-          return (
-            dosageForm !== null &&
-            currentQuestion.dosageForms.includes(dosageForm)
-          );
-        })
-        .map(getMedicationName)
-        .filter(Boolean),
+      data.map(getMedicationName).filter(Boolean),
     )
       .filter((name) => {
         if (!keyword) {
           return false;
         }
-
         return name.toLowerCase().includes(keyword);
       })
       .filter((name) => !selectedAnswers.includes(name))
       .slice(0, 50);
 
-    /*
-     * ==================================================
-     * 回答選択
-     * ==================================================
-     */
-
+    //回答選択
     function toggleAnswer(medicationName: string) {
       if (answerSubmitted) {
         return;
@@ -1220,12 +1072,7 @@ export default function MedicationQuiz({ data }: Props) {
       });
     }
 
-    /*
-     * ==================================================
-     * 回答する
-     * ==================================================
-     */
-
+    //回答する
     function handleAnswer() {
       if (answerSubmitted) {
         return;
