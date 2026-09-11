@@ -7,13 +7,6 @@ import {
   printAbbreviationQuizResult,
 } from "@/lib/pdf/abbreviationQuizPdf";
 
-/*
-
-==================================================
-データ型
-==================================================
-*/
-
 type Abbreviation = {
   [key: string]: string | number | null | undefined;
 };
@@ -22,26 +15,14 @@ type Props = {
   data: Abbreviation[];
 };
 
-/*
-
-==================================================
-出題問題数
-==================================================
-*/
-
+//出題問題数
 const QUESTION_COUNTS = [
   { value: 5, label: "5問" },
   { value: 10, label: "10問" },
   { value: -1, label: "全問" },
 ];
 
-/*
-
-==================================================
-回答形式
-==================================================
-*/
-
+//出題・回答形式
 const ANSWER_MODES = [
   {
     value: "abbreviation-to-japanese",
@@ -55,87 +36,32 @@ const ANSWER_MODES = [
 
 type AnswerMode = (typeof ANSWER_MODES)[number]["value"];
 
-/*
-
-==================================================
-出題カテゴリ
-==================================================
-*/
-
+//出題カテゴリ
 type CategoryMode = "all" | "category" | "law";
 
-/*
-
-==================================================
-クイズ問題
-==================================================
-*/
-
+//クイズ問題
 type QuizQuestion = {
   rowNumber: number | null;
-
   abbreviation: string;
-
   japaneseName: string;
-
   category: string;
-
   area: string;
 };
 
-/*
-
-==================================================
-クイズ回答
-==================================================
-*/
-
+//クイズ回答
 type QuizAnswer = {
-  /*
-
-ユーザーが実際に選択した回答
-
-
-未回答
-→ null
-*/
-  selectedValue: string | null;
-
-  /*
-
-正誤判定
-
-
-未回答
-→ null
-正解
-→ true
-不正解
-→ false
-*/
-  isCorrect: boolean | null;
+  selectedValue: string | null; //ユーザー回答内容
+  isCorrect: boolean | null; //正誤判定
 };
 
-/*
-
-==================================================
-クイズ状態
-==================================================
-*/
-
+//クイズ状態
 type QuizState = {
   questionCount: number;
-
   answerMode: AnswerMode;
-
   categoryMode: CategoryMode;
-
   selectedCategories: string[];
-
   questions: QuizQuestion[];
-
   currentQuestionIndex: number;
-
   answers: QuizAnswer[];
 };
 

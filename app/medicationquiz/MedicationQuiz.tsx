@@ -29,39 +29,26 @@ type QuizLevel = "large" | "small" | "ingredient";
 
 type QuizQuestion = {
   id: string;
-
   level: QuizLevel;
-
   questionValue: string;
-
   dosageForms: DosageForm[];
-
   correctMedications: string[];
 };
 
 type QuizAnswer = {
   selectedMedications: string[];
-
   correctMedications: string[];
-
   missedMedications: string[];
-
   extraMedications: string[];
-
   score: number;
-
   isPerfect: boolean;
 };
 
 //状態管理
-
 type QuizState = {
   questionCount: number;
-
   questions: QuizQuestion[];
-
   currentQuestionIndex: number;
-
   answers: QuizAnswer[];
 };
 
@@ -580,15 +567,11 @@ export default function MedicationQuiz({ data }: Props) {
 
           return {
             id: `large-${category}`,
-
             level: "large",
-
             questionValue: category,
-
             dosageForms: uniqueDosageForms(
               items.map((item) => getDosageForm(item)),
             ),
-
             correctMedications: uniqueStrings(
               items.map(getMedicationName).filter(Boolean),
             ),
@@ -597,12 +580,7 @@ export default function MedicationQuiz({ data }: Props) {
         .filter((question): question is QuizQuestion => question !== null);
     }
 
-    /*
-     * --------------------------------------------------
-     * 小分類
-     * --------------------------------------------------
-     */
-
+    //小分類
     if (quizLevel === "small") {
       const selected =
         selectedSmallCategories.length > 0
@@ -614,7 +592,6 @@ export default function MedicationQuiz({ data }: Props) {
                   .filter(Boolean),
               ),
             );
-
       return selected
         .map((category) => {
           const items = targetData.filter(
@@ -627,15 +604,11 @@ export default function MedicationQuiz({ data }: Props) {
 
           return {
             id: `small-${category}`,
-
             level: "small",
-
             questionValue: category,
-
             dosageForms: uniqueDosageForms(
               items.map((item) => getDosageForm(item)),
             ),
-
             correctMedications: uniqueStrings(
               items.map(getMedicationName).filter(Boolean),
             ),
@@ -644,12 +617,7 @@ export default function MedicationQuiz({ data }: Props) {
         .filter((question): question is QuizQuestion => question !== null);
     }
 
-    /*
-     * --------------------------------------------------
-     * 成分
-     * --------------------------------------------------
-     */
-
+    //成分
     if (selectedLargeCategories.length > 0) {
       targetData = targetData.filter((item) =>
         selectedLargeCategories.includes(getText(item, "大分類")),
@@ -662,12 +630,7 @@ export default function MedicationQuiz({ data }: Props) {
       );
     }
 
-    /*
-     * --------------------------------------------------
-     * 成分の選択順を維持
-     * --------------------------------------------------
-     */
-
+    //成分の選択順維持
     const selected =
       selectedIngredients.length > 0
         ? selectedIngredients
@@ -689,15 +652,11 @@ export default function MedicationQuiz({ data }: Props) {
 
         return {
           id: `ingredient-${ingredient}`,
-
           level: "ingredient",
-
           questionValue: ingredient,
-
           dosageForms: uniqueDosageForms(
             items.map((item) => getDosageForm(item)),
           ),
-
           correctMedications: uniqueStrings(
             items.map(getMedicationName).filter(Boolean),
           ),
@@ -706,12 +665,7 @@ export default function MedicationQuiz({ data }: Props) {
       .filter((question): question is QuizQuestion => question !== null);
   }
 
-  /*
-   * ==================================================
-   * クイズ開始
-   * ==================================================
-   */
-
+  //クイズ開始
   function handleStart() {
     if (selectedDosageForms.length === 0) {
       alert("剤型を1つ以上選択してください。");
@@ -745,39 +699,22 @@ export default function MedicationQuiz({ data }: Props) {
     };
 
     setQuizState(newQuizState);
-
     setSelectedAnswers([]);
-
     setAnswerSearch("");
-
     setAnswerSubmitted(false);
   }
 
-  /*
-   * ==================================================
-   * 同じ条件で再出題
-   * ==================================================
-   */
-
+  //同じ条件での再出題
   function handleRestartSameConditions() {
     handleStart();
   }
 
-  /*
-   * ==================================================
-   * 出題設定へ戻る
-   * ==================================================
-   */
-
+  //出題設定に戻る
   function handleBackToSettings() {
     localStorage.removeItem(STORAGE_KEY);
-
     setQuizState(null);
-
     setSelectedAnswers([]);
-
     setAnswerSearch("");
-
     setAnswerSubmitted(false);
   }
 
@@ -1489,10 +1426,6 @@ export default function MedicationQuiz({ data }: Props) {
           </section>
         )}
 
-        {/* ==================================================
-            小分類絞り込み
-        ================================================== */}
-
         {quizLevel === "small" && (
           <section className={styles.settingSection}>
             <h2 className={styles.settingTitle}>小分類で絞り込み</h2>
@@ -1546,10 +1479,6 @@ export default function MedicationQuiz({ data }: Props) {
             )}
           </section>
         )}
-
-        {/* ==================================================
-            成分絞り込み
-        ================================================== */}
 
         {quizLevel === "ingredient" && (
           <section className={styles.settingSection}>
@@ -1605,10 +1534,6 @@ export default function MedicationQuiz({ data }: Props) {
           </section>
         )}
 
-        {/* ==================================================
-            3. 出題問題数
-        ================================================== */}
-
         <section className={styles.settingSection}>
           <h2 className={styles.settingTitle}>3. 出題問題数</h2>
 
@@ -1633,10 +1558,6 @@ export default function MedicationQuiz({ data }: Props) {
           </p>
         </section>
 
-        {/* ==================================================
-            4. 紙形式テスト
-        ================================================== */}
-
         <section className={styles.paperTestSection}>
           <h2 className={styles.settingTitle}>4. 紙形式テスト</h2>
 
@@ -1659,10 +1580,6 @@ export default function MedicationQuiz({ data }: Props) {
             </button>
           </div>
         </section>
-
-        {/* ==================================================
-            出題開始
-        ================================================== */}
 
         <button
           type="button"
