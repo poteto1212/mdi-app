@@ -220,12 +220,7 @@ export default function MedicationQuiz({ data }: Props) {
   //回答済み状態
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
 
-  /*
-   * ==================================================
-   * localStorage読み込み
-   * ==================================================
-   */
-
+  //localStorage読み込み
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -690,11 +685,8 @@ export default function MedicationQuiz({ data }: Props) {
 
     const newQuizState: QuizState = {
       questionCount,
-
       questions: finalQuestions,
-
       currentQuestionIndex: 0,
-
       answers,
     };
 
@@ -718,12 +710,7 @@ export default function MedicationQuiz({ data }: Props) {
     setAnswerSubmitted(false);
   }
 
-  /*
-   * ==================================================
-   * クイズ中止
-   * ==================================================
-   */
-
+  //クイズ中止
   function handleStopQuiz() {
     const confirmed = window.confirm(
       "現在のクイズを中止しますか？\n\n途中までの回答内容は破棄され、出題設定画面に戻ります。",
@@ -736,20 +723,12 @@ export default function MedicationQuiz({ data }: Props) {
     localStorage.removeItem(STORAGE_KEY);
 
     setQuizState(null);
-
     setSelectedAnswers([]);
-
     setAnswerSearch("");
-
     setAnswerSubmitted(false);
   }
 
-  /*
-   * ==================================================
-   * 結果PDF出力
-   * ==================================================
-   */
-
+  //結果PDF出力
   function handlePrintResult() {
     if (!quizState) {
       return;
@@ -758,14 +737,7 @@ export default function MedicationQuiz({ data }: Props) {
     printMedicationQuizResult(quizState);
   }
 
-  /*
-   * ==================================================
-   * 紙テスト作成
-   *
-   * printQuizPaper()方式
-   * ==================================================
-   */
-
+  //紙テスト作成
   function handleCreatePaperTest() {
     if (selectedDosageForms.length === 0) {
       alert("剤型を1つ以上選択してください。");
@@ -779,90 +751,41 @@ export default function MedicationQuiz({ data }: Props) {
       return;
     }
 
-    /*
-     * --------------------------------------------------
-     * 出題問題数を適用
-     *
-     * PDFではランダム化しない
-     * --------------------------------------------------
-     */
-
+    //出題問題数の適用
     const finalQuestions =
       questionCount === -1 ? questions : questions.slice(0, questionCount);
 
-    /*
-     * --------------------------------------------------
-     * PDF用QuizState
-     * --------------------------------------------------
-     */
-
+    //PDF用QuizState
     const answers: QuizAnswer[] = finalQuestions.map((question) => ({
       selectedMedications: [],
-
       correctMedications: question.correctMedications,
-
       missedMedications: [],
-
       extraMedications: [],
-
       score: 0,
-
       isPerfect: false,
     }));
 
     const paperQuizState: QuizState = {
       questionCount: finalQuestions.length,
-
       questions: finalQuestions,
-
       currentQuestionIndex: finalQuestions.length,
-
       answers,
     };
 
-    /*
-     * --------------------------------------------------
-     * PDF出力
-     *
-     * ここで作成した問題をそのまま使用する。
-     *
-     * 再抽選されないため、
-     *
-     * 1ページ目 問題
-     * 2ページ目 解答
-     *
-     * が完全に同期する。
-     * --------------------------------------------------
-     */
-
+    //pdf出力
     printMedicationQuizPaper(paperQuizState);
   }
 
-  /*
-   * ==================================================
-   * localStorage確認中
-   * ==================================================
-   */
-
+  //localStorage確認中
   if (!storageChecked) {
     return null;
   }
 
-  /*
-   * ==================================================
-   * クイズ中
-   * ==================================================
-   */
-
+  //クイズ中
   if (quizState !== null) {
     const currentQuestion = quizState.questions[quizState.currentQuestionIndex];
 
-    /*
-     * ==================================================
-     * クイズ終了
-     * ==================================================
-     */
-
+    //クイズ終了
     if (!currentQuestion) {
       const totalScore = quizState.answers.reduce(
         (total, answer) => total + answer.score,
@@ -1082,12 +1005,7 @@ export default function MedicationQuiz({ data }: Props) {
       setAnswerSubmitted(false);
     }
 
-    /*
-     * ==================================================
-     * 問題画面
-     * ==================================================
-     */
-
+    //問題画面
     return (
       <main className={styles.container}>
         <div className={styles.card}>
@@ -1367,10 +1285,6 @@ export default function MedicationQuiz({ data }: Props) {
             ))}
           </div>
         </section>
-
-        {/* ==================================================
-            大分類絞り込み
-        ================================================== */}
 
         {quizLevel === "large" && (
           <section className={styles.settingSection}>

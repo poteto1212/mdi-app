@@ -16,7 +16,8 @@
         "formulahendry.auto-rename-tag",
         "formulahendry.auto-close-tag",
         "christian-kohler.path-intellisense",
-        "eamodio.gitlens"
+        "eamodio.gitlens",
+        "Gerrnperl.outline-map"
       ],
 
       "settings": {
