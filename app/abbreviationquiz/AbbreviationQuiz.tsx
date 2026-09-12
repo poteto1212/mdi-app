@@ -164,29 +164,17 @@ function isValidQuizState(value: unknown): value is QuizState {
     return false;
   }
 
-  /*
-
-選択カテゴリ
-*/
-
+  //選択カテゴリ
   if (!Array.isArray(state.selectedCategories)) {
     return false;
   }
 
-  /*
-
-問題
-*/
-
+  //問題
   if (!Array.isArray(state.questions)) {
     return false;
   }
 
-  /*
-
-現在の問題番号
-*/
-
+  //現在の問題番号
   if (
     typeof state.currentQuestionIndex !== "number" ||
     state.currentQuestionIndex < 0
@@ -194,11 +182,7 @@ function isValidQuizState(value: unknown): value is QuizState {
     return false;
   }
 
-  /*
-
-回答
-*/
-
+  //回答
   if (!Array.isArray(state.answers)) {
     return false;
   }
@@ -207,11 +191,7 @@ function isValidQuizState(value: unknown): value is QuizState {
     return false;
   }
 
-  /*
-
-各回答の形式も確認
-*/
-
+  //各回答の形式確認
   for (const answer of state.answers) {
     if (!answer || typeof answer !== "object") {
       return false;
@@ -233,66 +213,31 @@ function isValidQuizState(value: unknown): value is QuizState {
 }
 
 export default function AbbreviationQuiz({ data }: Props) {
-  /*
-
-==================================================
-出題設定
-==================================================
-*/
-
+  //出題設定
   const [questionCount, setQuestionCount] = useState(5);
-
   const [answerMode, setAnswerMode] = useState<AnswerMode>(
     "abbreviation-to-japanese",
   );
-
   const [categoryMode, setCategoryMode] = useState<CategoryMode>("all");
-
   const [categorySearch, setCategorySearch] = useState("");
-
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  /*
-
-==================================================
-クイズ状態
-==================================================
-*/
-
+  //クイズ状態
   const [quizState, setQuizState] = useState<QuizState | null>(null);
 
-  /*
-
-==================================================
-回答検索
-==================================================
-*/
-
+  //解答検索
   const [answerSearch, setAnswerSearch] = useState("");
 
-  /*
-
-==================================================
-localStorage確認
-==================================================
-*/
-
+  //localStrage確認
   const [storageChecked, setStorageChecked] = useState(false);
 
-  /*
-
-==================================================
-初回読み込み
-==================================================
-*/
-
+  //初回読み込み
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
 
       if (!saved) {
         setStorageChecked(true);
-
         return;
       }
 
@@ -301,11 +246,7 @@ localStorage確認
       if (isValidQuizState(parsed)) {
         setQuizState(parsed);
 
-        /*
-         * 復元時、
-         * 現在の回答があれば検索欄にも表示する。
-         */
-
+        //復元時、現在の回答があれば検索欄にも表示する。
         const currentAnswer = parsed.answers[parsed.currentQuestionIndex];
 
         if (currentAnswer?.selectedValue) {
@@ -321,13 +262,7 @@ localStorage確認
     }
   }, []);
 
-  /*
-
-==================================================
-クイズ状態保存
-==================================================
-*/
-
+  //クイズ状態保存
   useEffect(() => {
     if (!storageChecked) {
       return;
@@ -342,13 +277,7 @@ localStorage確認
     localStorage.setItem(STORAGE_KEY, JSON.stringify(quizState));
   }, [quizState, storageChecked]);
 
-  /*
-
-==================================================
-病態領域一覧
-==================================================
-*/
-
+  //病態領域一覧
   const categories = useMemo(() => {
     return Array.from(
       new Set(
@@ -359,13 +288,7 @@ localStorage確認
     ).sort((a, b) => a.localeCompare(b, "ja"));
   }, [data]);
 
-  /*
-
-==================================================
-病態領域候補
-==================================================
-*/
-
+  //病態領域候補
   const filteredCategories = useMemo(() => {
     const input = categorySearch.trim().toLowerCase();
 
@@ -378,33 +301,14 @@ localStorage確認
     );
   }, [categories, categorySearch]);
 
-  /*
-
-==================================================
-カテゴリ切り替え
-==================================================
-*/
-
+  //カテゴリ切り替え
   function changeCategoryMode(mode: CategoryMode) {
     setCategoryMode(mode);
-
-    /*
-     * モード変更時は
-     * 領域選択をリセットする。
-     */
-
-    setSelectedCategories([]);
-
+    setSelectedCategories([]); //モード変更時は領域選択をリセットする。
     setCategorySearch("");
   }
 
-  /*
-
-==================================================
-領域選択
-==================================================
-*/
-
+  //領域選択
   function toggleCategory(category: string) {
     setSelectedCategories((current) => {
       if (current.includes(category)) {
@@ -415,40 +319,17 @@ localStorage確認
     });
   }
 
-  /*
-
-==================================================
-クイズ問題作成
-==================================================
-*/
-
+  //クイズ問題作成
   function createQuizQuestions(): QuizQuestion[] | null {
-    /*
-     * ==================================================
-     * 病態領域別なのに未選択
-     * ==================================================
-     */
-
     if (categoryMode === "category" && selectedCategories.length === 0) {
       alert("領域を1つ以上選択してください");
 
       return null;
     }
 
-    /*
-     * ==================================================
-     * 出題対象
-     * ==================================================
-     */
-
     let targetData = data;
 
-    /*
-     * ==================================================
-     * 病態領域別
-     * ==================================================
-     */
-
+    //病態領域別
     if (categoryMode === "category") {
       targetData = data.filter((item) => {
         const area = String(item["病態領域"] ?? "").trim();
@@ -456,43 +337,17 @@ localStorage確認
         return selectedCategories.includes(area);
       });
     }
-
-    /*
-     * ==================================================
-     * 法規制度
-     * ==================================================
-     */
-
+    //法規制度
     if (categoryMode === "law") {
       targetData = data.filter((item) => {
         return String(item["カテゴリ"] ?? "").trim() === "法規制度";
       });
     }
 
-    /*
-     * ==================================================
-     * クイズ問題へ変換
-     * ==================================================
-     */
-
-    const targetQuestions = targetData.map(convertToQuestion);
-
-    /*
-     * ==================================================
-     * ランダム抽選
-     * ==================================================
-     */
-
-    const shuffled = shuffle(targetQuestions);
-
-    /*
-     * ==================================================
-     * 問題数決定
-     * ==================================================
-     */
-
+    const targetQuestions = targetData.map(convertToQuestion); //クイズ問題へ変換
+    const shuffled = shuffle(targetQuestions); //ランダム抽選
     const finalQuestions =
-      questionCount === -1 ? shuffled : shuffled.slice(0, questionCount);
+      questionCount === -1 ? shuffled : shuffled.slice(0, questionCount); //問題数決定
 
     return finalQuestions;
   }
@@ -525,14 +380,7 @@ localStorage確認
     setAnswerSearch(""); //解答検索欄リセット
     setQuizState(newQuizState); //クイズ開始
   }
-
-  /*
-
-==================================================
-出題PDF
-==================================================
-*/
-
+  //PDF出題
   function handlePrintPaper() {
     const finalQuestions = createQuizQuestions();
 
@@ -542,20 +390,13 @@ localStorage確認
 
     const paperQuizState: QuizState = {
       questionCount,
-
       answerMode,
-
       categoryMode,
-
       selectedCategories: [...selectedCategories],
-
       questions: finalQuestions,
-
       currentQuestionIndex: 0,
-
       answers: finalQuestions.map(() => ({
         selectedValue: null,
-
         isCorrect: null,
       })),
     };
@@ -563,56 +404,29 @@ localStorage確認
     printAbbreviationQuizPaper(paperQuizState);
   }
 
-  /*
-
-==================================================
-回答候補
-==================================================
-
-
-今回の出題問題だけではなく、
-全データから候補を取得する。
-*/
-
+  //回答候補
   const answerCandidates = useMemo(() => {
     if (!quizState) {
       return [];
     }
 
     const searchText = normalize(answerSearch);
-
-    /*
-     * 検索文字がなければ候補を表示しない。
-     */
-
+    //検索文字がなければ候補を表示しない。
     if (!searchText) {
       return [];
     }
-
-    /*
-     * ==================================================
-     * 略語 → 日本語名
-     * ==================================================
-     */
-
+    //略語 → 日本語名
     if (quizState.answerMode === "abbreviation-to-japanese") {
       const candidates = data
         .map((item) => String(item["日本語名"] ?? "").trim())
         .filter((value) => value !== "");
-
       const uniqueCandidates = Array.from(new Set(candidates));
 
       return uniqueCandidates.filter((value) =>
         normalize(value).includes(searchText),
       );
     }
-
-    /*
-     * ==================================================
-     * 日本語名 → 略語
-     * ==================================================
-     */
-
+    //日本語名 → 略語
     const candidates = data
       .map((item) => String(item["略語"] ?? "").trim())
       .filter((value) => value !== "");
@@ -651,13 +465,11 @@ localStorage確認
 
       answers[current.currentQuestionIndex] = {
         selectedValue: candidate,
-
         isCorrect: null,
       };
 
       return {
         ...current,
-
         answers,
       };
     });
@@ -882,11 +694,6 @@ localStorage確認中
         <main className={styles.container}>
           <div className={styles.card}>
             <h1 className={styles.heading}>🧠 略語クイズ 結果</h1>
-
-            {/* =========================
-            集計
-        ========================== */}
-
             <div className={styles.resultSummary}>
               <div className={styles.summaryItem}>
                 <span className={styles.summaryLabel}>問題数</span>
@@ -914,10 +721,6 @@ localStorage確認中
                 <span className={styles.summaryValue}>{unansweredCount}</span>
               </div>
             </div>
-
-            {/* =========================
-            結果表
-        ========================== */}
 
             <div className={styles.resultTableWrapper}>
               <table className={styles.resultTable}>
@@ -950,20 +753,9 @@ localStorage確認中
 
                     return (
                       <tr key={`${question.rowNumber}-${index}`}>
-                        {/* 問題 */}
-
                         <td>{questionText}</td>
-
-                        {/* 回答 */}
-
                         <td>{answer.selectedValue || "未回答"}</td>
-
-                        {/* 正答 */}
-
                         <td>{correctAnswer}</td>
-
-                        {/* 正誤 */}
-
                         <td>
                           {answer.isCorrect === true ? (
                             <span className={styles.resultCorrect}>正解</span>
@@ -1046,51 +838,18 @@ localStorage確認中
       );
     }
 
-    /*
-     * ==================================================
-     * 現在の回答
-     * ==================================================
-     */
-
-    const currentAnswer = quizState.answers[quizState.currentQuestionIndex];
-
-    /*
-     * ==================================================
-     * 問題文
-     * ==================================================
-     */
-
+    const currentAnswer = quizState.answers[quizState.currentQuestionIndex]; //現在の回答
     const questionText =
       quizState.answerMode === "abbreviation-to-japanese"
         ? currentQuestion.abbreviation
-        : currentQuestion.japaneseName;
-
-    /*
-     * ==================================================
-     * 正答
-     * ==================================================
-     */
-
+        : currentQuestion.japaneseName; //問題文
     const correctAnswer = getCorrectAnswer(
       currentQuestion,
 
       quizState.answerMode,
-    );
-
-    /*
-     * ==================================================
-     * 回答済みか
-     * ==================================================
-     */
-
-    const hasAnswered = currentAnswer?.isCorrect !== null;
-
-    /*
-     * ==================================================
-     * クイズ画面
-     * ==================================================
-     */
-
+    ); //正答
+    const hasAnswered = currentAnswer?.isCorrect !== null; //回答状態
+    //クイズ画面
     return (
       <main className={styles.container}>
         <div className={styles.card}>
