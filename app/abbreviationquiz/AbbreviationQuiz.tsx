@@ -65,27 +65,10 @@ type QuizState = {
   answers: QuizAnswer[];
 };
 
-/*
-
-==================================================
-localStorage
-==================================================
-*/
-
+//localStorage
 const STORAGE_KEY = "abbreviationQuizState";
 
-/*
-
-==================================================
-表記補正
-==================================================
-
-
-・前後空白を除去
-・大文字 / 小文字を無視
-・ひらがな / カタカナを同一視
-*/
-
+//localStorage
 function normalize(value: unknown): string {
   return String(value ?? "")
     .trim()
@@ -95,17 +78,7 @@ function normalize(value: unknown): string {
     );
 }
 
-/*
-
-==================================================
-正答取得
-==================================================
-
-
-回答形式によって
-正しい答えを取得する。
-*/
-
+//正答取得
 function getCorrectAnswer(
   question: QuizQuestion,
   answerMode: AnswerMode,
@@ -117,49 +90,25 @@ function getCorrectAnswer(
   return question.abbreviation;
 }
 
-/*
-
-==================================================
-正誤判定
-==================================================
-*/
-
+//正誤判定
 function judgeAnswer(
   selectedValue: string | null,
   question: QuizQuestion,
   answerMode: AnswerMode,
 ): boolean | null {
-  /*
-
-回答がない場合
-*/
-
+  //回答がない場合
   if (!selectedValue) {
     return null;
   }
 
-  /*
-
-正答取得
-*/
-
+  //正答取得
   const correctAnswer = getCorrectAnswer(question, answerMode);
 
-  /*
-
-表記を補正して比較
-*/
-
+  //表記を補正して比較
   return normalize(selectedValue) === normalize(correctAnswer);
 }
 
-/*
-
-==================================================
-元データ → クイズ問題
-==================================================
-*/
-
+//元データ→クイズ問題
 function convertToQuestion(item: Abbreviation): QuizQuestion {
   const rawRowNumber = item["rowNumber"];
 
@@ -172,43 +121,26 @@ function convertToQuestion(item: Abbreviation): QuizQuestion {
 
   return {
     rowNumber: Number.isFinite(rowNumber) ? rowNumber : null,
-
     abbreviation: String(item["略語"] ?? "").trim(),
-
     japaneseName: String(item["日本語名"] ?? "").trim(),
-
     category: String(item["カテゴリ"] ?? "").trim(),
-
     area: String(item["病態領域"] ?? "").trim(),
   };
 }
 
-/*
-
-==================================================
-Fisher-Yatesシャッフル
-==================================================
-*/
-
+//Fisher-Yatesシャッフル
 function shuffle<T>(items: T[]): T[] {
   const result = [...items];
 
   for (let i = result.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-
     [result[i], result[j]] = [result[j], result[i]];
   }
 
   return result;
 }
 
-/*
-
-==================================================
-QuizState検証
-==================================================
-*/
-
+//QuizState検証
 function isValidQuizState(value: unknown): value is QuizState {
   if (!value || typeof value !== "object") {
     return false;
@@ -216,23 +148,14 @@ function isValidQuizState(value: unknown): value is QuizState {
 
   const state = value as Partial<QuizState>;
 
-  /*
-
-回答形式
-*/
-
+  //回答形式
   if (
     state.answerMode !== "abbreviation-to-japanese" &&
     state.answerMode !== "japanese-to-abbreviation"
   ) {
     return false;
   }
-
-  /*
-
-カテゴリモード
-*/
-
+  //カテゴリモード
   if (
     state.categoryMode !== "all" &&
     state.categoryMode !== "category" &&
@@ -308,13 +231,6 @@ function isValidQuizState(value: unknown): value is QuizState {
 
   return true;
 }
-
-/*
-
-==================================================
-コンポーネント
-==================================================
-*/
 
 export default function AbbreviationQuiz({ data }: Props) {
   /*
@@ -581,13 +497,7 @@ localStorage確認
     return finalQuestions;
   }
 
-  /*
-
-==================================================
-出題開始
-==================================================
-*/
-
+  //出題開始
   function handleStart() {
     const finalQuestions = createQuizQuestions();
 
@@ -595,55 +505,25 @@ localStorage確認
       return;
     }
 
-    /*
-     * =========================
-     * 回答状態
-     * =========================
-     */
-
+    //回答状況
     const answers: QuizAnswer[] = finalQuestions.map(() => ({
       selectedValue: null,
-
       isCorrect: null,
     }));
 
-    /*
-     * =========================
-     * クイズ状態
-     * =========================
-     */
-
+    //クイズ状態
     const newQuizState: QuizState = {
       questionCount,
-
       answerMode,
-
       categoryMode,
-
       selectedCategories: [...selectedCategories],
-
       questions: finalQuestions,
-
       currentQuestionIndex: 0,
-
       answers,
     };
 
-    /*
-     * =========================
-     * 回答検索欄リセット
-     * =========================
-     */
-
-    setAnswerSearch("");
-
-    /*
-     * =========================
-     * クイズ開始
-     * =========================
-     */
-
-    setQuizState(newQuizState);
+    setAnswerSearch(""); //解答検索欄リセット
+    setQuizState(newQuizState); //クイズ開始
   }
 
   /*
@@ -1558,10 +1438,6 @@ localStorage確認中
           </div>
         </section>
 
-        {/* =========================
-        病態領域別設定
-    ========================== */}
-
         {categoryMode === "category" && (
           <section className={styles.settingSection}>
             <h3 className={styles.subHeading}>領域を選択</h3>
@@ -1594,10 +1470,6 @@ localStorage確認中
             </div>
           </section>
         )}
-
-        {/* =========================
-        出題開始
-    ========================== */}
 
         <button
           type="button"
