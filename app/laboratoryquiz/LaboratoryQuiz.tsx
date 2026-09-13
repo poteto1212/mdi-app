@@ -15,102 +15,42 @@ type LaboratoryData = {
 type Props = {
   data: LaboratoryData[];
 };
-
-/*
- * ==================================================
- * 出題問題数
- * ==================================================
- */
-
+//出題問題数
 const QUESTION_COUNTS = [
   { value: 5, label: "5問" },
   { value: 10, label: "10問" },
   { value: -1, label: "全問" },
 ];
-
-/*
- * ==================================================
- * クイズ問題
- * ==================================================
- */
-
+//クイズ問題
 type QuizQuestion = {
   rowNumber: number | null;
-
   abbreviation: string;
-
   japaneseName: string;
-
   lowerLimit: number;
-
   upperLimit: number;
-
   unit: string;
 };
-
-/*
- * ==================================================
- * 回答結果
- * ==================================================
- *
- * 下限・上限それぞれについて
- *
- * PERFECT
- * GOOD
- * BAD
- * 未回答
- *
- * を保持する。
- */
-
+//回答結果
 type ResultLevel = "PERFECT" | "GOOD" | "BAD" | null;
 
 type QuizAnswer = {
   lowerValue: number | null;
-
   upperValue: number | null;
-
   lowerResult: ResultLevel;
-
   upperResult: ResultLevel;
 };
-
-/*
- * ==================================================
- * localStorageに保存するクイズ状態
- * ==================================================
- */
-
+//localStorageに保存するクイズ状態
 type QuizState = {
   questionCount: number;
-
   questions: QuizQuestion[];
-
   currentQuestionIndex: number;
-
   answers: QuizAnswer[];
 };
 
-/*
- * ==================================================
- * localStorage
- * ==================================================
- */
-
+//localStorage
 const STORAGE_KEY = "laboratoryQuizState";
 
-/*
- * ==================================================
- * 数値変換
- * ==================================================
- *
- * Google Sheets APIから取得した値は
- * 文字列として渡ってくる。
- *
- * そのためここでNumber()を使って
- * 数値へ変換する。
- */
-
+//数値変換
 function parseNumber(value: unknown): number {
   if (value === null || value === undefined) {
     return 0;
@@ -130,16 +70,9 @@ function parseNumber(value: unknown): number {
 
   return number;
 }
-
-/*
- * ==================================================
- * 問題変換
- * ==================================================
- */
-
+//問題変換
 function convertToQuestion(item: LaboratoryData): QuizQuestion {
   const rawRowNumber = item["rowNumber"];
-
   const rowNumber =
     rawRowNumber !== null &&
     rawRowNumber !== undefined &&
@@ -149,25 +82,15 @@ function convertToQuestion(item: LaboratoryData): QuizQuestion {
 
   return {
     rowNumber: Number.isFinite(rowNumber) ? rowNumber : null,
-
     abbreviation: String(item["略語"] ?? "").trim(),
-
     japaneseName: String(item["日本語名"] ?? "").trim(),
-
     lowerLimit: parseNumber(item["基準値下限"]),
-
     upperLimit: parseNumber(item["基準値上限"]),
-
     unit: String(item["単位"] ?? "").trim(),
   };
 }
 
-/*
- * ==================================================
- * Fisher-Yatesシャッフル
- * ==================================================
- */
-
+//Fisher-Yatesシャッフル
 function shuffle<T>(items: T[]): T[] {
   const result = [...items];
 
@@ -179,13 +102,7 @@ function shuffle<T>(items: T[]): T[] {
 
   return result;
 }
-
-/*
- * ==================================================
- * QuizState検証
- * ==================================================
- */
-
+//QuizState検証
 function isValidQuizState(value: unknown): value is QuizState {
   if (!value || typeof value !== "object") {
     return false;
@@ -215,24 +132,7 @@ function isValidQuizState(value: unknown): value is QuizState {
   return true;
 }
 
-/*
- * ==================================================
- * 正誤判定
- * ==================================================
- *
- * 完全一致
- * → PERFECT
- *
- * 誤差10%以内
- * → GOOD
- *
- * それ以上
- * → BAD
- *
- * 0除算対策として
- * 正解値が0の場合は
- * 特別処理する。
- */
+//
 
 function judgeValue(input: number | null, correct: number): ResultLevel {
   if (input === null || !Number.isFinite(input)) {
