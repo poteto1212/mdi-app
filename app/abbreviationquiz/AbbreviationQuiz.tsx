@@ -403,7 +403,6 @@ export default function AbbreviationQuiz({ data }: Props) {
 
     printAbbreviationQuizPaper(paperQuizState);
   }
-
   //回答候補
   const answerCandidates = useMemo(() => {
     if (!quizState) {
@@ -437,14 +436,7 @@ export default function AbbreviationQuiz({ data }: Props) {
       normalize(value).includes(searchText),
     );
   }, [data, quizState, answerSearch]);
-
-  /*
-
-==================================================
-回答候補選択
-==================================================
-*/
-
+  // 回答候補選択
   function handleSelectAnswer(candidate: string) {
     setQuizState((current) => {
       if (!current) {
@@ -453,16 +445,12 @@ export default function AbbreviationQuiz({ data }: Props) {
 
       const currentAnswer = current.answers[current.currentQuestionIndex];
 
-      /*
-       * すでに回答済みなら変更しない。
-       */
-
       if (currentAnswer?.isCorrect !== null) {
+        //すでに回答済みなら変更しない。
         return current;
       }
 
       const answers = [...current.answers];
-
       answers[current.currentQuestionIndex] = {
         selectedValue: candidate,
         isCorrect: null,
@@ -476,14 +464,7 @@ export default function AbbreviationQuiz({ data }: Props) {
 
     setAnswerSearch(candidate);
   }
-
-  /*
-
-==================================================
-回答する
-==================================================
-*/
-
+  //回答する
   function handleAnswer() {
     setQuizState((current) => {
       if (!current) {
@@ -491,79 +472,47 @@ export default function AbbreviationQuiz({ data }: Props) {
       }
 
       const question = current.questions[current.currentQuestionIndex];
-
       const answer = current.answers[current.currentQuestionIndex];
 
-      /*
-       * 問題または回答が存在しない場合
-       */
-
       if (!question || !answer) {
+        //問題または回答が存在しない場合
         return current;
       }
-
-      /*
-       * 回答未選択
-       */
 
       if (!answer.selectedValue) {
+        // 回答未選択
         return current;
       }
-
-      /*
-       * すでに回答済み
-       */
 
       if (answer.isCorrect !== null) {
+        //すでに回答済み
         return current;
       }
 
-      /*
-       * ==================================================
-       * 正誤判定
-       * ==================================================
-       */
-
+      //正誤判定
       const isCorrect = judgeAnswer(
         answer.selectedValue,
-
         question,
-
         current.answerMode,
       );
 
-      /*
-       * ==================================================
-       * 回答結果保存
-       * ==================================================
-       */
-
+      //回答結果保存
       const answers = [...current.answers];
-
       answers[current.currentQuestionIndex] = {
         selectedValue: answer.selectedValue,
-
         isCorrect,
       };
 
       return {
         ...current,
-
         answers,
       };
     });
   }
 
-  /*
-
-==================================================
-次の問題
-==================================================
-*/
-
+  //次の問題
   function handleNextQuestion() {
     setAnswerSearch("");
-
     setQuizState((current) => {
       if (!current) {
         return current;
@@ -571,51 +520,26 @@ export default function AbbreviationQuiz({ data }: Props) {
 
       return {
         ...current,
-
         currentQuestionIndex: current.currentQuestionIndex + 1,
       };
     });
   }
-
-  /*
-
-==================================================
-スキップ
-==================================================
-*/
-
+  //スキップ(回答状態は変更しないまま次へ進む。)
   function handleSkip() {
     setAnswerSearch("");
-
     setQuizState((current) => {
       if (!current) {
         return current;
       }
 
-      /*
-       * 回答状態は変更しない。
-       *
-       * selectedValue: null
-       * isCorrect: null
-       *
-       * のまま次へ進む。
-       */
-
       return {
         ...current,
-
         currentQuestionIndex: current.currentQuestionIndex + 1,
       };
     });
   }
 
-  /*
-
-==================================================
-中断
-==================================================
-*/
-
+  //中断
   function handleAbort() {
     if (window.confirm("クイズを中断して結果画面へ移動しますか？")) {
       setQuizState((current) => {
@@ -625,20 +549,13 @@ export default function AbbreviationQuiz({ data }: Props) {
 
         return {
           ...current,
-
           currentQuestionIndex: current.questions.length,
         };
       });
     }
   }
 
-  /*
-
-==================================================
-localStorage確認中
-==================================================
-*/
-
+  //localStorage確認中
   if (!storageChecked) {
     return null;
   }
@@ -727,11 +644,8 @@ localStorage確認中
                 <thead>
                   <tr>
                     <th>問題</th>
-
                     <th>回答</th>
-
                     <th>正答</th>
-
                     <th>正誤</th>
                   </tr>
                 </thead>
@@ -776,32 +690,21 @@ localStorage確認中
               </table>
             </div>
 
-            {/* =========================
-            結果操作
-        ========================== */}
-
             <div className={styles.resultActions}>
-              {/* PDF */}
-
               <button
                 type="button"
                 className={styles.primaryButton}
                 onClick={() =>
                   printAbbreviationQuizResult(
                     quizState,
-
                     correctCount,
-
                     incorrectCount,
-
                     unansweredCount,
                   )
                 }
               >
                 結果PDF
               </button>
-
-              {/* 再度出題 */}
 
               <button
                 type="button"
@@ -816,8 +719,6 @@ localStorage確認中
               >
                 再度出題
               </button>
-
-              {/* 閉じる */}
 
               <button
                 type="button"
@@ -924,16 +825,13 @@ localStorage確認中
                     }
 
                     const answers = [...current.answers];
-
                     answers[current.currentQuestionIndex] = {
                       selectedValue: null,
-
                       isCorrect: null,
                     };
 
                     return {
                       ...current,
-
                       answers,
                     };
                   });
