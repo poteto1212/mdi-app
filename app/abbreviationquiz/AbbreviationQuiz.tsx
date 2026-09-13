@@ -328,7 +328,6 @@ export default function AbbreviationQuiz({ data }: Props) {
     }
 
     let targetData = data;
-
     //病態領域別
     if (categoryMode === "category") {
       targetData = data.filter((item) => {
@@ -560,53 +559,23 @@ export default function AbbreviationQuiz({ data }: Props) {
     return null;
   }
 
-  /*
-
-==================================================
-クイズ中
-==================================================
-*/
-
+  //クイズ中
   if (quizState !== null) {
     const currentQuestion = quizState.questions[quizState.currentQuestionIndex];
-
-    /*
-     * ==================================================
-     * 結果画面
-     * ==================================================
-     */
-
+    //結果画面
     if (!currentQuestion) {
-      /*
-       * =========================
-       * 正解数
-       * =========================
-       */
-
+      //正解数
       const correctCount = quizState.answers.filter(
         (answer) => answer.isCorrect === true,
       ).length;
-
-      /*
-       * =========================
-       * 不正解数
-       * =========================
-       */
-
+      //不正解数
       const incorrectCount = quizState.answers.filter(
         (answer) => answer.isCorrect === false,
       ).length;
-
-      /*
-       * =========================
-       * 未回答数
-       * =========================
-       */
-
+      //未回答数
       const unansweredCount = quizState.answers.filter(
         (answer) => answer.isCorrect === null,
       ).length;
-
       return (
         <main className={styles.container}>
           <div className={styles.card}>
@@ -614,7 +583,6 @@ export default function AbbreviationQuiz({ data }: Props) {
             <div className={styles.resultSummary}>
               <div className={styles.summaryItem}>
                 <span className={styles.summaryLabel}>問題数</span>
-
                 <span className={styles.summaryValue}>
                   {quizState.questions.length}
                 </span>
@@ -622,19 +590,16 @@ export default function AbbreviationQuiz({ data }: Props) {
 
               <div className={styles.summaryItem}>
                 <span className={styles.summaryLabel}>正解</span>
-
                 <span className={styles.summaryValue}>{correctCount}</span>
               </div>
 
               <div className={styles.summaryItem}>
                 <span className={styles.summaryLabel}>不正解</span>
-
                 <span className={styles.summaryValue}>{incorrectCount}</span>
               </div>
 
               <div className={styles.summaryItem}>
                 <span className={styles.summaryLabel}>未回答</span>
-
                 <span className={styles.summaryValue}>{unansweredCount}</span>
               </div>
             </div>
@@ -653,7 +618,6 @@ export default function AbbreviationQuiz({ data }: Props) {
                 <tbody>
                   {quizState.questions.map((question, index) => {
                     const answer = quizState.answers[index];
-
                     const questionText =
                       quizState.answerMode === "abbreviation-to-japanese"
                         ? question.abbreviation
@@ -661,7 +625,6 @@ export default function AbbreviationQuiz({ data }: Props) {
 
                     const correctAnswer = getCorrectAnswer(
                       question,
-
                       quizState.answerMode,
                     );
 
@@ -711,9 +674,7 @@ export default function AbbreviationQuiz({ data }: Props) {
                 className={styles.secondaryButton}
                 onClick={() => {
                   localStorage.removeItem(STORAGE_KEY);
-
                   setQuizState(null);
-
                   setAnswerSearch("");
                 }}
               >
@@ -725,9 +686,7 @@ export default function AbbreviationQuiz({ data }: Props) {
                 className={styles.secondaryButton}
                 onClick={() => {
                   localStorage.removeItem(STORAGE_KEY);
-
                   setQuizState(null);
-
                   setAnswerSearch("");
                 }}
               >
@@ -754,10 +713,6 @@ export default function AbbreviationQuiz({ data }: Props) {
     return (
       <main className={styles.container}>
         <div className={styles.card}>
-          {/* =========================
-          ヘッダー
-      ========================== */}
-
           <div className={styles.questionHeader}>
             <h1 className={styles.heading}>🧠 略語クイズ</h1>
 
@@ -766,10 +721,6 @@ export default function AbbreviationQuiz({ data }: Props) {
               {quizState.questions.length}
             </div>
           </div>
-
-          {/* =========================
-          問題
-      ========================== */}
 
           <div className={styles.question}>
             <div className={styles.questionLabel}>
@@ -781,16 +732,8 @@ export default function AbbreviationQuiz({ data }: Props) {
             <p className={styles.questionText}>{questionText}</p>
           </div>
 
-          {/* =========================
-          回答前
-      ========================== */}
-
           {!hasAnswered && (
             <div className={styles.answerArea}>
-              {/* =========================
-              回答検索
-          ========================== */}
-
               <input
                 type="text"
                 className={styles.answerInput}
@@ -802,28 +745,17 @@ export default function AbbreviationQuiz({ data }: Props) {
                 value={answerSearch}
                 onChange={(e) => {
                   setAnswerSearch(e.target.value);
-
-                  /*
-                   * 検索文字を変更したら
-                   * 現在の選択を解除する。
-                   */
-
+                  // 検索文字を変更したら現在の選択を解除する。
                   setQuizState((current) => {
                     if (!current) {
                       return current;
                     }
-
                     const currentAnswer =
                       current.answers[current.currentQuestionIndex];
-
-                    /*
-                     * すでに回答済みなら変更しない。
-                     */
-
+                    //すでに回答済みなら変更しない。
                     if (currentAnswer?.isCorrect !== null) {
                       return current;
                     }
-
                     const answers = [...current.answers];
                     answers[current.currentQuestionIndex] = {
                       selectedValue: null,
@@ -837,10 +769,6 @@ export default function AbbreviationQuiz({ data }: Props) {
                   });
                 }}
               />
-
-              {/* =========================
-              検索候補
-          ========================== */}
 
               {answerSearch.trim() !== "" && answerCandidates.length > 0 && (
                 <div className={styles.candidateList}>
@@ -857,19 +785,11 @@ export default function AbbreviationQuiz({ data }: Props) {
                 </div>
               )}
 
-              {/* =========================
-              候補なし
-          ========================== */}
-
               {answerSearch.trim() !== "" && answerCandidates.length === 0 && (
                 <div className={styles.noCategory}>
                   該当する候補がありません
                 </div>
               )}
-
-              {/* =========================
-              選択中
-          ========================== */}
 
               {currentAnswer?.selectedValue && (
                 <div className={styles.selectedCandidate}>
@@ -878,13 +798,7 @@ export default function AbbreviationQuiz({ data }: Props) {
                 </div>
               )}
 
-              {/* =========================
-              操作
-          ========================== */}
-
               <div className={styles.quizActions}>
-                {/* 回答 */}
-
                 <button
                   type="button"
                   className={styles.primaryButton}
@@ -893,8 +807,6 @@ export default function AbbreviationQuiz({ data }: Props) {
                 >
                   回答する
                 </button>
-
-                {/* スキップ */}
 
                 <button
                   type="button"
@@ -907,8 +819,6 @@ export default function AbbreviationQuiz({ data }: Props) {
                     : "スキップして結果を見る"}
                 </button>
 
-                {/* 中断 */}
-
                 <button
                   type="button"
                   className={styles.dangerButton}
@@ -920,16 +830,8 @@ export default function AbbreviationQuiz({ data }: Props) {
             </div>
           )}
 
-          {/* =========================
-          回答後
-      ========================== */}
-
           {hasAnswered && (
             <>
-              {/* =========================
-              正誤
-          ========================== */}
-
               {currentAnswer.isCorrect ? (
                 <div className={styles.correct}>
                   <div>⭕ 正解！</div>
@@ -960,10 +862,6 @@ export default function AbbreviationQuiz({ data }: Props) {
                 </div>
               )}
 
-              {/* =========================
-              次の問題
-          ========================== */}
-
               <div className={styles.quizActions}>
                 <button
                   type="button"
@@ -975,10 +873,6 @@ export default function AbbreviationQuiz({ data }: Props) {
                     ? "次の問題へ"
                     : "結果を見る"}
                 </button>
-
-                {/* =========================
-                中断
-            ========================== */}
 
                 <button
                   type="button"
@@ -994,26 +888,13 @@ export default function AbbreviationQuiz({ data }: Props) {
       </main>
     );
   }
-
-  /*
-
-==================================================
-出題設定画面
-==================================================
-*/
-
+  //出題設定画面
   return (
     <main className={styles.container}>
       <div className={styles.card}>
         <h1 className={styles.heading}>🧠 略語クイズ</h1>
-
-        {/* =========================
-        出題問題数
-    ========================== */}
-
         <section className={styles.settingSection}>
           <h2 className={styles.settingTitle}>1. 出題問題数</h2>
-
           <div className={styles.radioGroup}>
             {QUESTION_COUNTS.map((item) => (
               <label key={item.value} className={styles.radioLabel}>
@@ -1024,16 +905,11 @@ export default function AbbreviationQuiz({ data }: Props) {
                   checked={questionCount === item.value}
                   onChange={() => setQuestionCount(item.value)}
                 />
-
                 {item.label}
               </label>
             ))}
           </div>
         </section>
-
-        {/* =========================
-        回答形式
-    ========================== */}
 
         <section className={styles.settingSection}>
           <h2 className={styles.settingTitle}>2. 回答形式</h2>
@@ -1055,13 +931,8 @@ export default function AbbreviationQuiz({ data }: Props) {
           </div>
         </section>
 
-        {/* =========================
-        出題カテゴリ
-    ========================== */}
-
         <section className={styles.settingSection}>
           <h2 className={styles.settingTitle}>3. 出題カテゴリ</h2>
-
           <div className={styles.radioGroup}>
             <label className={styles.radioLabel}>
               <input
