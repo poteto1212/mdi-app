@@ -29,10 +29,7 @@ export default function AbbreviationSearch({ data }: Props) {
     );
   }
 
-  /*
-   * 登録済みの病態領域を取得
-   * 重複は除外する
-   */
+  //登録済みの病態領域を取得
   const domains = useMemo(() => {
     return Array.from(
       new Set(
@@ -43,9 +40,7 @@ export default function AbbreviationSearch({ data }: Props) {
     );
   }, [data]);
 
-  /*
-   * 病態領域の検索候補
-   */
+  //病態領域の検索候補
   const domainSuggestions = useMemo(() => {
     const input = searchDomain.toLowerCase().trim();
 
@@ -56,29 +51,18 @@ export default function AbbreviationSearch({ data }: Props) {
     return domains.filter((domain) => domain.toLowerCase().includes(input));
   }, [domains, searchDomain]);
 
-  /*
-   * 病態領域候補を選択
-   *
-   * 選択した候補を
-   * 検索ボックスへ自動入力する
-   */
+  //病態領域候補を選択
   function selectDomain(domain: string) {
     setSearchDomain(domain);
   }
 
   return (
     <>
-      {/* =========================
-          検索
-      ========================== */}
-
       <div className={styles.card}>
         <h3 className={styles.sectionHeading}>🔎 検索</h3>
-
         <label className={styles.label} htmlFor="searchText">
           キーワード
         </label>
-
         <input
           className={styles.input}
           id="searchText"
@@ -86,9 +70,7 @@ export default function AbbreviationSearch({ data }: Props) {
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
         />
-
         <label className={styles.label}>カテゴリ</label>
-
         <div className={styles.categoryChecks}>
           {["検査値", "病態", "法規制度"].map((category) => (
             <label className={styles.categoryLabel} key={category}>
@@ -99,16 +81,13 @@ export default function AbbreviationSearch({ data }: Props) {
                 checked={categories.includes(category)}
                 onChange={() => toggleCategory(category)}
               />
-
               {category}
             </label>
           ))}
         </div>
-
         <label className={styles.label} htmlFor="searchDomain">
           病態領域で絞り込み
         </label>
-
         <input
           className={styles.input}
           id="searchDomain"
@@ -117,17 +96,11 @@ export default function AbbreviationSearch({ data }: Props) {
           value={searchDomain}
           onChange={(e) => setSearchDomain(e.target.value)}
         />
-
-        {/* =========================
-            病態領域候補
-        ========================== */}
-
         {searchDomain.trim() !== "" && domainSuggestions.length > 0 && (
           <div className={styles.domainSuggestions}>
             <div className={styles.domainSuggestionTitle}>
               登録済みの病態領域
             </div>
-
             {domainSuggestions.map((domain) => (
               <div
                 key={domain}
@@ -140,11 +113,6 @@ export default function AbbreviationSearch({ data }: Props) {
           </div>
         )}
       </div>
-
-      {/* =========================
-          検索結果
-      ========================== */}
-
       <AbbreviationResults
         data={data}
         searchText={searchText}

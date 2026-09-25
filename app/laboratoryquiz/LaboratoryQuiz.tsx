@@ -142,33 +142,15 @@ function judgeValue(input: number | null, correct: number): ResultLevel {
   if (!Number.isFinite(correct)) {
     return "BAD";
   }
-
-  /*
-   * 正解値が0の場合
-   *
-   * 通常の検査値では基本的に発生しないが、
-   * 0除算を防ぐため安全に処理する。
-   *
-   * 入力0なら完全一致。
-   * それ以外はBAD。
-   */
-
+  //正解値が0の場合(0除算防止)
   if (correct === 0) {
     return input === 0 ? "PERFECT" : "BAD";
   }
-
-  /*
-   * 完全一致
-   */
-
+  //完全一致
   if (input === correct) {
     return "PERFECT";
   }
-
-  /*
-   * 相対誤差
-   */
-
+  //相対誤差
   const errorRate = Math.abs(input - correct) / Math.abs(correct);
 
   if (errorRate <= 0.1) {
@@ -178,59 +160,20 @@ function judgeValue(input: number | null, correct: number): ResultLevel {
   return "BAD";
 }
 
-/*
- * ==================================================
- * PDF出力
- * ==================================================
- */
-
-/*
- * ==================================================
- * コンポーネント
- * ==================================================
- */
-
+//PDF出力(コンポーネント)
 export default function LaboratoryQuiz({ data }: Props) {
-  /*
-   * =========================
-   * 出題問題数
-   * =========================
-   */
-
+  //出題問題数
   const [questionCount, setQuestionCount] = useState(5);
-
-  /*
-   * =========================
-   * クイズ状態
-   * =========================
-   */
-
+  //クイズ状態
   const [quizState, setQuizState] = useState<QuizState | null>(null);
 
-  /*
-   * =========================
-   * 入力値
-   * =========================
-   */
-
+  //入力値
   const [lowerInput, setLowerInput] = useState("");
-
   const [upperInput, setUpperInput] = useState("");
 
-  /*
-   * =========================
-   * localStorage確認
-   * =========================
-   */
-
+  //localStorage確認
   const [storageChecked, setStorageChecked] = useState(false);
-
-  /*
-   * ==================================================
-   * 初回読み込み
-   * ==================================================
-   */
-
+  //初回読み込み
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -267,11 +210,7 @@ export default function LaboratoryQuiz({ data }: Props) {
     }
   }, []);
 
-  /*
-   * ==================================================
-   * クイズ状態保存
-   * ==================================================
-   */
+  //
 
   useEffect(() => {
     if (!storageChecked) {
@@ -286,238 +225,87 @@ export default function LaboratoryQuiz({ data }: Props) {
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(quizState));
   }, [quizState, storageChecked]);
-  /*
-   * ==================================================
-   * クイズ問題作成
-   * ==================================================
-   *
-   * 現在の出題設定から問題を作成する。
-   *
-   * ・通常クイズ
-   * ・紙形式PDF
-   *
-   * の両方から利用する。
-   *
-   * この関数ではquizStateを変更しない。
-   * ==================================================
-   */
-
+  //クイズ問題作成
   function createQuizQuestions(): QuizQuestion[] {
-    /*
-     * =========================
-     * 問題変換
-     * =========================
-     */
-
+    //問題変換
     const targetQuestions = data.map(convertToQuestion);
-
-    /*
-     * =========================
-     * シャッフル
-     * =========================
-     */
-
+    //シャッフル
     const shuffled = shuffle(targetQuestions);
-
-    /*
-     * =========================
-     * 問題数決定
-     * =========================
-     */
+    //問題数決定
 
     return questionCount === -1 ? shuffled : shuffled.slice(0, questionCount);
   }
-  /*
-   * ==================================================
-   * 出題開始
-   * ==================================================
-   */
-
-  /*
-   * ==================================================
-   * 出題開始
-   * ==================================================
-   */
-
+  //出題開始
   function handleStart() {
-    /*
-     * =========================
-     * 問題作成
-     * =========================
-     */
-
+    //問題作成
     const finalQuestions = createQuizQuestions();
-
-    /*
-     * =========================
-     * 回答状態
-     * =========================
-     */
-
+    // 回答状態
     const answers: QuizAnswer[] = finalQuestions.map(() => ({
       lowerValue: null,
-
       upperValue: null,
-
       lowerResult: null,
-
       upperResult: null,
     }));
 
-    /*
-     * =========================
-     * クイズ状態
-     * =========================
-     */
-
+    //クイズ状態
     const newQuizState: QuizState = {
       questionCount,
-
       questions: finalQuestions,
-
       currentQuestionIndex: 0,
-
       answers,
     };
 
-    /*
-     * =========================
-     * 入力欄リセット
-     * =========================
-     */
-
+    //入力欄リセット
     setLowerInput("");
-
     setUpperInput("");
-
-    /*
-     * =========================
-     * クイズ開始
-     * =========================
-     */
-
+    //クイズ開始
     setQuizState(newQuizState);
   }
-  /*
-   * ==================================================
-   * 紙形式PDF作成
-   * ==================================================
-   *
-   * 通常クイズとは別に問題セットを作成し、
-   * quizState自体は変更しない。
-   *
-   * 問題ページと解答ページには
-   * 同じpaperQuizStateを渡すため、
-   * 問題順は完全に同期する。
-   * ==================================================
-   */
-
+  //紙形式PDF作成
   function handlePrintQuizPaper() {
-    /*
-     * =========================
-     * 問題作成
-     * =========================
-     */
-
+    //問題作成
     const finalQuestions = createQuizQuestions();
-
-    /*
-     * =========================
-     * PDF用回答状態
-     * =========================
-     */
-
+    //PDF用回答状態
     const answers: QuizAnswer[] = finalQuestions.map(() => ({
       lowerValue: null,
-
       upperValue: null,
-
       lowerResult: null,
-
       upperResult: null,
     }));
 
-    /*
-     * =========================
-     * PDF用QuizState
-     * =========================
-     */
-
+    //PDF用QuizState
     const paperQuizState: QuizState = {
       questionCount,
-
       questions: finalQuestions,
-
       currentQuestionIndex: 0,
-
       answers,
     };
 
-    /*
-     * =========================
-     * PDF出力
-     * =========================
-     */
-
+    //PDF出力
     printLaboratoryQuizPaper(paperQuizState);
   }
-  /*
-   * ==================================================
-   * localStorage確認中
-   * ==================================================
-   */
-
+  //localStorage確認中
   if (!storageChecked) {
     return null;
   }
-
-  /*
-   * ==================================================
-   * クイズ中
-   * ==================================================
-   */
-
+  //クイズ中
   if (quizState !== null) {
     const currentQuestion = quizState.questions[quizState.currentQuestionIndex];
-
-    /*
-     * ==================================================
-     * 結果画面
-     * ==================================================
-     */
-
+    //結果画面
     if (!currentQuestion) {
-      /*
-       * =========================
-       * PERFECT数
-       * =========================
-       */
-
+      //PERFECT数
       const perfectCount = quizState.answers.filter(
         (answer) =>
           answer.lowerResult === "PERFECT" || answer.upperResult === "PERFECT",
       ).length;
 
-      /*
-       * =========================
-       * 正解問題数
-       * =========================
-       *
-       * GOOD以上なら正解。
-       *
-       * 両方ある場合は
-       * 下限・上限ともGOOD以上
-       * で正解とする。
-       */
-
+      //正解問題数
       const correctCount = quizState.questions.filter((question, index) => {
         const answer = quizState.answers[index];
-
         const lowerCorrect =
           question.lowerLimit === 0 ||
           answer.lowerResult === "PERFECT" ||
           answer.lowerResult === "GOOD";
-
         const upperCorrect =
           question.upperLimit === 0 ||
           answer.upperResult === "PERFECT" ||

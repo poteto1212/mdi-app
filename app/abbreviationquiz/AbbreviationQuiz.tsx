@@ -224,10 +224,8 @@ export default function AbbreviationQuiz({ data }: Props) {
 
   //クイズ状態
   const [quizState, setQuizState] = useState<QuizState | null>(null);
-
   //解答検索
   const [answerSearch, setAnswerSearch] = useState("");
-
   //localStrage確認
   const [storageChecked, setStorageChecked] = useState(false);
 
