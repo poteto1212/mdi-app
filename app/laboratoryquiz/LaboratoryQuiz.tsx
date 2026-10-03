@@ -314,26 +314,17 @@ export default function LaboratoryQuiz({ data }: Props) {
         return lowerCorrect && upperCorrect;
       }).length;
 
-      /*
-       * =========================
-       * 不正解
-       * =========================
-       */
-
+      //不正解
       const incorrectCount = quizState.questions.filter((question, index) => {
         const answer = quizState.answers[index];
-
         const lowerAnswered =
           question.lowerLimit === 0 || answer.lowerValue !== null;
-
         const upperAnswered =
           question.upperLimit === 0 || answer.upperValue !== null;
-
         const lowerCorrect =
           question.lowerLimit === 0 ||
           answer.lowerResult === "PERFECT" ||
           answer.lowerResult === "GOOD";
-
         const upperCorrect =
           question.upperLimit === 0 ||
           answer.upperResult === "PERFECT" ||
@@ -344,21 +335,13 @@ export default function LaboratoryQuiz({ data }: Props) {
         );
       }).length;
 
-      /*
-       * =========================
-       * 未回答
-       * =========================
-       */
-
+      //未回答
       const unansweredCount = quizState.questions.filter((question, index) => {
         const answer = quizState.answers[index];
-
         const lowerUnanswered =
           question.lowerLimit !== 0 && answer.lowerValue === null;
-
         const upperUnanswered =
           question.upperLimit !== 0 && answer.upperValue === null;
-
         return lowerUnanswered || upperUnanswered;
       }).length;
 
@@ -658,17 +641,13 @@ export default function LaboratoryQuiz({ data }: Props) {
 
         answers[current.currentQuestionIndex] = {
           lowerValue,
-
           upperValue,
-
           lowerResult,
-
           upperResult,
         };
 
         return {
           ...current,
-
           answers,
         };
       });
