@@ -9,22 +9,10 @@ type Abbreviation = {
 };
 
 export default async function AbbreviationQuizPage() {
-  /*
-   * =========================
-   * スプレッドシートから取得
-   * =========================
-   */
+  //スプレッドシートのデータ取得
   const data = await getAbbreviations();
 
-  /*
-   * =========================
-   * クイズ対象データ
-   * =========================
-   *
-   * ・カテゴリ「検査値」 → 除外
-   * ・略語が空欄 → 除外
-   * ・日本語名が空欄 → 除外
-   */
+  //クイズ対象データ
   const quizData = data.filter((item: Abbreviation) => {
     const category = String(item["カテゴリ"] ?? "").trim();
     const abbreviation = String(item["略語"] ?? "").trim();
@@ -41,11 +29,7 @@ export default async function AbbreviationQuizPage() {
     return true;
   });
 
-  /*
-   * =========================
-   * 重複統合
-   * =========================
-   */
+  //重複統合
   const uniqueMap = new Map<string, Abbreviation>();
 
   for (const item of quizData) {
@@ -60,7 +44,6 @@ export default async function AbbreviationQuizPage() {
   }
 
   const uniqueQuizData = Array.from(uniqueMap.values());
-
   return (
     <main>
       <AbbreviationQuiz data={uniqueQuizData} />
