@@ -653,17 +653,10 @@ export default function LaboratoryQuiz({ data }: Props) {
       });
     }
 
-    /*
-     * ==================================================
-     * 次の問題
-     * ==================================================
-     */
-
+    //次の問題
     function handleNextQuestion() {
       setLowerInput("");
-
       setUpperInput("");
-
       setQuizState((current) => {
         if (!current) {
           return current;
@@ -671,46 +664,27 @@ export default function LaboratoryQuiz({ data }: Props) {
 
         return {
           ...current,
-
           currentQuestionIndex: current.currentQuestionIndex + 1,
         };
       });
     }
 
-    /*
-     * ==================================================
-     * 問題スキップ
-     * ==================================================
-     *
-     * 回答せず次へ進む。
-     *
-     * 回答状態はnullのまま。
-     */
-
+    //問題スキップ
     function handleSkip() {
       setLowerInput("");
-
       setUpperInput("");
-
       setQuizState((current) => {
         if (!current) {
           return current;
         }
-
         return {
           ...current,
-
           currentQuestionIndex: current.currentQuestionIndex + 1,
         };
       });
     }
 
-    /*
-     * ==================================================
-     * 中断
-     * ==================================================
-     */
-
+    //中断
     function handleAbort() {
       if (window.confirm("クイズを中断して結果画面へ移動しますか？")) {
         setQuizState((current) => {
@@ -720,50 +694,31 @@ export default function LaboratoryQuiz({ data }: Props) {
 
           return {
             ...current,
-
             currentQuestionIndex: current.questions.length,
           };
         });
       }
     }
 
-    /*
-     * ==================================================
-     * クイズ画面
-     * ==================================================
-     */
-
+    //クイズ画面
     return (
       <main className={styles.container}>
         <div className={styles.card}>
-          {/* =========================
-              ヘッダー
-          ========================== */}
-
           <div className={styles.questionHeader}>
             <h1 className={styles.heading}>🧪 検査値クイズ</h1>
-
             <div className={styles.questionNumber}>
               {quizState.currentQuestionIndex + 1} /{" "}
               {quizState.questions.length}
             </div>
           </div>
-
-          {/* =========================
-              問題
-          ========================== */}
-
           <div className={styles.question}>
             <div className={styles.questionLabel}>この検査値の基準値は？</div>
-
             <p className={styles.questionText}>
               {currentQuestion.abbreviation}
             </p>
-
             <div className={styles.questionName}>
               {currentQuestion.japaneseName}
             </div>
-
             {currentQuestion.unit && (
               <div className={styles.unit}>
                 単位：
@@ -771,17 +726,8 @@ export default function LaboratoryQuiz({ data }: Props) {
               </div>
             )}
           </div>
-
-          {/* =========================
-              未回答
-          ========================== */}
-
           {!hasAnswered && (
             <div className={styles.answerArea}>
-              {/* =========================
-                  下限
-              ========================== */}
-
               {currentQuestion.lowerLimit !== 0 && (
                 <div className={styles.valueInputGroup}>
                   <label className={styles.valueLabel}>下限</label>
@@ -797,14 +743,9 @@ export default function LaboratoryQuiz({ data }: Props) {
                 </div>
               )}
 
-              {/* =========================
-                  上限
-              ========================== */}
-
               {currentQuestion.upperLimit !== 0 && (
                 <div className={styles.valueInputGroup}>
                   <label className={styles.valueLabel}>上限</label>
-
                   <input
                     type="text"
                     inputMode="decimal"
@@ -815,10 +756,6 @@ export default function LaboratoryQuiz({ data }: Props) {
                   />
                 </div>
               )}
-
-              {/* =========================
-                  操作
-              ========================== */}
 
               <div className={styles.quizActions}>
                 <button
@@ -848,16 +785,8 @@ export default function LaboratoryQuiz({ data }: Props) {
             </div>
           )}
 
-          {/* =========================
-              正誤表示
-          ========================== */}
-
           {hasAnswered && (
             <>
-              {/* =========================
-                  下限判定
-              ========================== */}
-
               {currentQuestion.lowerLimit !== 0 && (
                 <div
                   className={
@@ -883,10 +812,6 @@ export default function LaboratoryQuiz({ data }: Props) {
                 </div>
               )}
 
-              {/* =========================
-                  上限判定
-              ========================== */}
-
               {currentQuestion.upperLimit !== 0 && (
                 <div
                   className={
@@ -911,11 +836,6 @@ export default function LaboratoryQuiz({ data }: Props) {
                   </div>
                 </div>
               )}
-
-              {/* =========================
-                  次の問題
-              ========================== */}
-
               <div className={styles.quizActions}>
                 <button
                   type="button"
@@ -943,21 +863,11 @@ export default function LaboratoryQuiz({ data }: Props) {
     );
   }
 
-  /*
-   * ==================================================
-   * 出題設定画面
-   * ==================================================
-   */
-
+  //出題設定画面
   return (
     <main className={styles.container}>
       <div className={styles.card}>
         <h1 className={styles.heading}>🧪 検査値クイズ</h1>
-
-        {/* =========================
-            出題問題数
-        ========================== */}
-
         <section className={styles.settingSection}>
           <h2 className={styles.settingTitle}>1. 出題問題数</h2>
 
@@ -977,10 +887,6 @@ export default function LaboratoryQuiz({ data }: Props) {
             ))}
           </div>
         </section>
-
-        {/* =========================
-            出題開始
-        ========================== */}
         <button
           type="button"
           className={styles.secondaryButton}
